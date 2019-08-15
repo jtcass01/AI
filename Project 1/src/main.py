@@ -21,13 +21,6 @@ class Coordinate(object):
     def display(self):
         print("(X: " + str(self.x) + ", Y: " + str(self.y) + ", V: " + str(self.visited) + ")")
 
-    @staticmethod
-    def copy(source_coord, dest_coord):
-        dest_coord.x = source_coord.x
-        dest_coord.y = source_coord.y
-        dest_coord.distances = source_coord.distances
-        dest_coord.visisted = source_coord.visited
-
 class CoordinateSet(object):
     def __init__(self, coordinate_file_path):
         self.coordinates = CoordinateSet.read_coordinates(coordinate_file_path)
