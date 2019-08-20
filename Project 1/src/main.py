@@ -2,8 +2,32 @@
 
 import matplotlib.pyplot as plt
 
+class Route(object):
+    def __init__(self, starting_spot):
+        self.city_order = list([0])
+        self.distance_traveled = 0
+
+    def __eq__(self, other):
+        return self.distance_traveled == other.distance_traveled
+
+    def __lt__(self, other):
+        return self.distance_traveled < other.distance_traveled
+
+    def __le__(self, other):
+        return self.distance_traveled <= other.distance_traveled
+
+    def __gt__(self, other):
+        return self.distance_traveled > other.distance_traveled
+
+    def __ge__(self, other):
+        return self.distance_traveled >= other.distance_traveled
+
+    def __str__(self):
+        return str(self.city_order) + ", " + str(self.distance_traveled)
+
 class Coordinate(object):
-    def __init__(self, x, y):
+    def __init__(self, coordinate_id, x, y):
+        self.coordinate_id = coordinate_id
         self.x = x
         self.y = y
         self.distances = list([])
@@ -18,8 +42,8 @@ class Coordinate(object):
     def compute_distance(self, other_coordinate):
         return ((self.x - other_coordinate.x)**2 + (self.y - other_coordinate.y)**2)**0.5
 
-    def display(self):
-        print("(X: " + str(self.x) + ", Y: " + str(self.y) + ", V: " + str(self.visited) + ")")
+    def __str__(self):
+        return "(ID: " + str(self.coordinate_id) + ", X: " + str(self.x) + ", Y: " + str(self.visited) + ")"
 
 class CoordinateSet(object):
     def __init__(self, coordinate_file_path):
@@ -34,7 +58,7 @@ class CoordinateSet(object):
 
     def display_graph(self):
         for coordinate in self.coordinates:
-            coordinate.display()
+            print(coordinate)
 
         print("")
 
@@ -51,7 +75,7 @@ class CoordinateSet(object):
         return updated_distance_list
 
     def greedy_tsm_solution(self, distance_traveled=0):
-        city_order = list([0])
+        route = Route(0)
 
         min_distance = 0
         min_distance_index = 0
@@ -75,17 +99,26 @@ class CoordinateSet(object):
                 self.coordinates[min_distance_index].visited = True
                 distance_list = self.get_updated_distance_list_for_coordinate(current_coordinate)
 
-                city_order.append(min_distance_index)
-                distance_traveled += min_distance
+                route.city_order.append(min_distance_index)
+                route.distance_traveled += min_distance
 
-        distance_traveled += self.distance_graph[0][city_order[len(city_order)-1]]
-        city_order.append(0)
+        route.distance_traveled += self.distance_graph[0][route.city_order[len(route.city_order)-1]]
+        route.city_order.append(0)
 
-        return city_order, distance_traveled
+        return route
+
+    def brute_force_tsm_solution(self, distance_traveled = 0):
+        route = Route(0)
+        print(self.distance_graph[0])
+        return route
+
+    def try_all_open_routes_from_node():
+        pass
 
     @staticmethod
     def read_coordinates(cordinate_file_path):
         coordinates = list([])
+        coordinate_index = 0
         
         try:
             coordinate_file = open(coordinate_file_path, "r")
@@ -93,8 +126,8 @@ class CoordinateSet(object):
             for line in coordinate_file.readlines():
                 if line[0].isdigit():
                     index, x, y = line.split(" ")
-                    coordinates.append(Coordinate(float(x), float(y)))
-                                       
+                    coordinates.append(Coordinate(coordinate_index, float(x), float(y)))
+                    coordinate_index += 1
         finally:
             coordinate_file.close()
 
@@ -112,10 +145,9 @@ class CoordinateSet(object):
     
 
 if __name__ == "__main__":
-
     coordinate_file_paths = list([])
 
-    for i in range(4, 13):
+    for i in range(4, 13-8):
         coordinate_file_paths.append("/Users/sonia66/Downloads/Project1/Random{}.tsp".format(i))
 
     for coordinate_file_path in coordinate_file_paths:
@@ -130,4 +162,4 @@ if __name__ == "__main__":
 
         print("\n=== Displaying Solution ===")
 
-        print(coordinate_set.greedy_tsm_solution())
+        print(coordinate_set.brute_force_tsm_solution())
