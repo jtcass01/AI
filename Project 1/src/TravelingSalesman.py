@@ -37,7 +37,7 @@ class TravelingSalesman():
 
         # Initialize the route
         route = Route([], graph)
-        # goto the vertex
+        # goto the current vertex id
         route.goto(current_vertex_id)
 
         # Initialize a list of routes
@@ -47,10 +47,7 @@ class TravelingSalesman():
         routes.extend(try_all_open_routes_from_current_route(route))
 
         # Identify the route with minimum distance traveled
-        minimum_route = deepcopy(min(routes))
-
-        # return minimum route
-        return minimum_route
+        return min(routes)
 
 if __name__ == "__main__":
     # Retrieve command line arguments
