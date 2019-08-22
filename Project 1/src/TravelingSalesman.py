@@ -10,56 +10,77 @@ class TravelingSalesman():
     def brute_force_solution(graph, current_vertex_id=0, distance_traveled = 0):
         # Recursive function for trying all adjacent vertices.
         def try_all_open_routes_from_current_route(route):
+            # Initialize Routes to keep track of all attempted routes.
             routes = list([])
-            new_route = list([])
+            # Start at the current vertex id location
             current_vertex = route.graph.vertices[current_vertex_id]
 
+            # For each adjacent vertex that has not been visited
             for adjacent_vertex in [adjacent_vertex for adjacent_vertex in current_vertex.adjacent_vertices if adjacent_vertex.visited == False]:
+                # copy the route so far
                 new_route = deepcopy(route)
+                # goto the current adjacent_vertex
                 new_route.goto(adjacent_vertex.vertex_id)
 
+                # if all vertices have been visisted
                 if(new_route.graph.finished()):
+                    # goto the starting point
                     new_route.goto(current_vertex_id)
+                    # append the route to the list of completed routes
                     routes.append(new_route)
-                else:
+                else: # if not,
+                    # Recall the recursive function using the updated route.
                     routes.extend(try_all_open_routes_from_current_route(new_route))
 
+            # After all adjacent vertices have been visisted recursively, return the list of routes
             return routes
 
-        # Initialize the route and go to the starting point
+        # Initialize the route
         route = Route([], graph)
+        # goto the vertex
         route.goto(current_vertex_id)
+
+        # Initialize a list of routes
         routes = list([])
 
         # Recursively try all open routes from the current route, advancing when possible.
         routes.extend(try_all_open_routes_from_current_route(route))
 
         # Identify the route with minimum distance traveled
-        minimum_route = deepcopy(routes[0])
-
-        for route in routes:
-            if route < minimum_route:
-                minimum_route = deepcopy(route)
+        minimum_route = deepcopy(min(routes))
 
         # return minimum route
         return minimum_route
 
 if __name__ == "__main__":
+    # Retrieve command line arguments
     args = sys.argv
 
-    solve_method = sys.argv[1]
-    content_file = sys.argv[2]
+    if len(args) != 3:
+        print("Command Line Arguments should follow the format:")
+        print("TrainingSalesman.py [solve_method] [relative path to vertex_graph_file]")
+        print("\nImplemented solve_methods include: brute_force")
+    else:
+        # retrieve solve_method
+        solve_method = sys.argv[1]
+        # retrieve relative path to vertex_graph_file
+        vertex_graph_file = sys.argv[2]
 
-    vertices = FileHandler.read_vertices(os.getcwd() + os.sep + content_file)
+        # Read the vertices from the vertex graph file.
+        vertices = FileHandler.read_vertices(os.getcwd() + os.sep + vertex_graph_file)
 
-    graph = Graph(vertices)
-    graph.build_graph()
+        # Build a graph representing the vertices and edges.
+        graph = Graph(vertices)
+        # Calculate edges
+        graph.build_graph()
 
-    print("\n=== Displaying Graph ===")
+        # Display the graph before solving.  TODO: Replace with plotting
+        print("\n=== Displaying Graph ===")
+        print(graph)
 
-    print(graph)
-
-    print("\n=== Displaying Solution ===")
-
-    if solve_method == 'brute_force':
-        print("brute_force_solution", str(TravelingSalesman.brute_force_solution(graph)))
+        # Solve the graph using the solve_method provided
+        print("\n=== Displaying Solution ===")
+        if solve_method == 'brute_force':
+            print("brute_force_solution", str(TravelingSalesman.brute_force_solution(graph)))
+        else:
+            print("Invalid solve_method.  Current implemented solve methods include: brute_force")
