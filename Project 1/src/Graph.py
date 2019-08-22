@@ -26,13 +26,20 @@ class Route(object):
         return str(self.vertex_order) + ", " + str(self.distance_traveled)
 
     def goto(self, vertex_id):
+        # If no vertex has been visisted
         if len(self.vertex_order) == 0:
+            # Initialize the distance traveled to 0
             self.distance_traveled = 0
+            # Add the starting vertex to the vertex_order
             self.vertex_order.append(vertex_id)
+            # Mart the vertex as being visisted
             self.graph.vertices[vertex_id].visited = True
         else:
+            # Find the distance between the goto vertex and the last vertex visited
             self.distance_traveled += self.graph.vertices[self.vertex_order[-1]].compute_distance(self.graph.vertices[vertex_id])
+            # Add the new vertex to the vertex_order
             self.vertex_order.append(vertex_id)
+            # Mark the vertex as being visisted
             self.graph.vertices[vertex_id].visited = True
 
 class Vertex(object):
@@ -48,22 +55,20 @@ class Vertex(object):
         return self.vertex_id == other.vertex_id
 
     def __str__(self):
-        result = "(ID: " + str(self.vertex_id) + ", X: " + str(self.x) + ", Y: " + str(self.y) + ", V:" + str(self.visited) + ")\n"
-
-        return result[:-1]
+        return "(ID: " + str(self.vertex_id) + ", X: " + str(self.x) + ", Y: " + str(self.y) + ", V:" + str(self.visited) + ")"
 
     def compute_distance(self, other_vertex):
         return ((self.x - other_vertex.x)**2 + (self.y - other_vertex.y)**2)**0.5
 
     def display(self):
+        # display self
         print(self)
+        # as well as every adjacent_vertex
         for vertex in self.adjacent_vertices:
             print(vertex)
 
-    def copy(self, other):
-        self.vertex_id = other.vertex_id
-        self.x = other.x
-        self.y = other.y
+    def get_unvisited_adjacent_vertex_ids(self):
+        return [adjacent_vertex for adjacent_vertex in self.adjacent_vertices if adjacent_vertex.visited == False]
 
 class Graph(object):
     def __init__(self, vertices):
@@ -87,9 +92,13 @@ class Graph(object):
         return string
 
     def build_graph(self):
+        # Iterating over each vertex twice
         for vertex1 in self.vertices:
             for vertex2 in self.vertices:
+                # Calculate the distances for a row
                 vertex2.distances.append(vertex2.compute_distance(vertex1))
+            # Create a matrix of distances with pairs 0,0 , 1,1 ... all
+            # having distance 0 denoting the vertex of reference for the row
             self.edges.append(vertex1.distances)
 
         return self.edges

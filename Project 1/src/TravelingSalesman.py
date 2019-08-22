@@ -16,7 +16,7 @@ class TravelingSalesman():
             current_vertex = route.graph.vertices[current_vertex_id]
 
             # For each adjacent vertex that has not been visited
-            for adjacent_vertex in [adjacent_vertex for adjacent_vertex in current_vertex.adjacent_vertices if adjacent_vertex.visited == False]:
+            for adjacent_vertex in current_vertex.get_unvisited_adjacent_vertex_ids():
                 # copy the route so far
                 new_route = deepcopy(route)
                 # goto the current adjacent_vertex
