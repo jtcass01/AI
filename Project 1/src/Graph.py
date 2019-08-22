@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import matplotlib.pyplot as plt
-import pandas as pd
+#import pandas as pd
 
 class Route(object):
     def __init__(self, current_vertex_order, graph):
@@ -103,14 +103,13 @@ class Graph(object):
             # having distance 0 denoting the vertex of reference for the row
             self.edges.append(vertex1.distances)
 
-        test_dict = {}
-        for index, edge_set in enumerate(self.edges):
-            test_dict[index] = edge_set
+#        test_dict = {}
+#        for index, edge_set in enumerate(self.edges):
+#            test_dict[index] = edge_set
 
-        df = pd.dataframe(test_dict)
-        print(df)
-
-        print(test_dict)
+#        df = pd.dataframe(test_dict)
+#        print(df)
+#        print(test_dict)
 
         return self.edges
 
