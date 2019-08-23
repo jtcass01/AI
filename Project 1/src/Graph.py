@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import matplotlib.pyplot as plt
-#import pandas as pd
+import pandas as pd
+import numpy as np
 
 class Route(object):
     def __init__(self, current_vertex_order, graph):
@@ -74,7 +75,7 @@ class Vertex(object):
 class Graph(object):
     def __init__(self, vertices):
         self.vertices = vertices
-        self.edges = list([])
+        self.edges = None
 
     def __str__(self):
         string = ""
@@ -85,35 +86,27 @@ class Graph(object):
 
         string += "\n"
 
-
-        for edge in self.edges:
-            string += str(edge)
-            string += '\n'
+        string += str(self.edges)
 
         return string
 
     def build_graph(self):
+        edge_dictionary = {}
+
         # Iterating over each vertex twice
-        for vertex1 in self.vertices:
+        for index, vertex1 in enumerate(self.vertices):
             for vertex2 in self.vertices:
                 # Calculate the distances for a row
                 vertex2.distances.append(vertex2.compute_distance(vertex1))
-            print("vertex2.distances: " + str(vertex2.distances))
             # Create a matrix of distances with pairs 0,0 , 1,1 ... all
             # having distance 0 denoting the vertex of reference for the row
-            self.edges.append(vertex1.distances)
+            edge_dictionary[index] = vertex1.distances
 
-#        test_dict = {}
-#        for index, edge_set in enumerate(self.edges):
-#            test_dict[index] = edge_set
-
-#        df = pd.dataframe(test_dict)
-#        print(df)
-#        print(test_dict)
+        self.edges = pd.DataFrame(edge_dictionary)
 
         return self.edges
 
-    def plot_graph(self):
+    def plot(self):
         x = list([])
         y = list([])
 

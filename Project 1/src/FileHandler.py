@@ -1,11 +1,12 @@
 #!/usr/bin/python
 from Graph import Vertex
+import numpy as np
 
 class FileHandler():
     @staticmethod
     def read_vertices(vertex_file_path):
         # Initialize list and index
-        vertices = list([])
+        vertices = np.array([])
         vertex_index = 0
 
         # Try to open the file
@@ -19,7 +20,7 @@ class FileHandler():
                     # split the line into index, x, and y values
                     index, x, y = line.split(" ")
                     # Create a vertex object out of these attributes and append it to the list of vertices
-                    vertices.append(Vertex(vertex_index, float(x), float(y)))
+                    vertices = np.concatenate((vertices, Vertex(vertex_index, float(x), float(y))), axis = None)
                     # Increment the vertex index by 1
                     vertex_index += 1
         # When finished, close the file.

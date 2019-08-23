@@ -4,6 +4,8 @@ import os
 from copy import deepcopy
 from FileHandler import FileHandler
 from Graph import Route, Graph
+import numpy as np
+
 
 class TravelingSalesman():
     @staticmethod
@@ -11,7 +13,7 @@ class TravelingSalesman():
         # Recursive function for trying all adjacent vertices.
         def try_all_open_routes_from_current_route(route):
             # Initialize Routes to keep track of all attempted routes.
-            routes = list([])
+            routes = np.array([])
             # Start at the current vertex id location
             current_vertex = route.graph.vertices[current_vertex_id]
 
@@ -27,24 +29,24 @@ class TravelingSalesman():
                     # goto the starting point
                     new_route.goto(current_vertex_id)
                     # append the route to the list of completed routes
-                    routes.append(new_route)
+                    routes = np.concatenate((routes, new_route), axis=None)
                 else: # if not,
                     # Recall the recursive function using the updated route.
-                    routes.extend(try_all_open_routes_from_current_route(new_route))
+                    routes = np.concatenate((routes, try_all_open_routes_from_current_route(new_route)), axis=None)
 
             # After all adjacent vertices have been visisted recursively, return the list of routes
             return routes
 
         # Initialize the route
-        route = Route([], graph)
+        route = Route(list([]), graph)
         # goto the current vertex id
         route.goto(current_vertex_id)
 
         # Initialize a list of routes
-        routes = list([])
+        routes = np.array([])
 
         # Recursively try all open routes from the current route, advancing when possible.
-        routes.extend(try_all_open_routes_from_current_route(route))
+        routes = np.concatenate((routes, try_all_open_routes_from_current_route(route)), axis=None)
 
         # Identify the route with minimum distance traveled
         return min(routes)
@@ -73,6 +75,7 @@ if __name__ == "__main__":
 
         # Display the graph before solving.  TODO: Replace with plotting
         print("\n=== Displaying Graph ===")
+        graph.plot()
         print(graph)
 
         # Solve the graph using the solve_method provided
