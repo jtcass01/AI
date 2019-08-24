@@ -40,7 +40,7 @@ class Route(object):
         plots.append(vertex_plot)
 
         for vertex_index in range(len(self.vertex_order)-1):
-            plots.append(plt.plot([self.graph.vertices[self.vertex_order[vertex_index]].x, self.graph.vertices[self.vertex_order[vertex_index+1]].x], [self.graph.vertices[self.vertex_order[vertex_index]].y, self.graph.vertices[self.vertex_order[vertex_index+1]].y], label="Edge {}{}".format(self.vertex_order[vertex_index], self.vertex_order[vertex_index+1])))
+            plots.append(plt.plot([self.graph.vertices[self.vertex_order[vertex_index]].x, self.graph.vertices[self.vertex_order[vertex_index+1]].x], [self.graph.vertices[self.vertex_order[vertex_index]].y, self.graph.vertices[self.vertex_order[vertex_index+1]].y], label="Edge {}-{}".format(self.vertex_order[vertex_index], self.vertex_order[vertex_index+1])))
 
         plt.legend(loc=2, fontsize='small')
         plt.show()
@@ -139,7 +139,7 @@ class Graph(object):
         for vertex1 in self.vertices:
             for vertex2 in self.vertices:
                 if vertex1 != vertex2:
-                    plots.append(plt.plot([vertex1.x, vertex2.x], [vertex1.y, vertex2.y], label="Edge {}{}".format(vertex1.vertex_id, vertex2.vertex_id)))
+                    plots.append(plt.plot([vertex1.x, vertex2.x], [vertex1.y, vertex2.y], label="Edge {}-{}".format(vertex1.vertex_id, vertex2.vertex_id)))
 
         plt.legend(loc=2, fontsize='small')
         plt.show()

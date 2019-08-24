@@ -75,8 +75,8 @@ if __name__ == "__main__":
 
         # Display the graph before solving.  TODO: Replace with plotting
         print("\n=== Displaying Graph ===")
-        graph.plot()
         print(graph)
+        graph.plot()
 
         # Solve the graph using the solve_method provided
         print("\n=== Displaying Solution ===")
