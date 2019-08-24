@@ -27,6 +27,24 @@ class Route(object):
     def __str__(self):
         return str(self.vertex_order) + ", " + str(self.distance_traveled)
 
+    def plot(self):
+        x = list([])
+        y = list([])
+        plots = list([])
+
+        for vertex in self.graph.vertices:
+            x.append(vertex.x)
+            y.append(vertex.y)
+
+        vertex_plot = plt.scatter(x,y, label="Vertices")
+        plots.append(vertex_plot)
+
+        for vertex_index in range(len(self.vertex_order)-1):
+            plots.append(plt.plot([self.graph.vertices[self.vertex_order[vertex_index]].x, self.graph.vertices[self.vertex_order[vertex_index+1]].x], [self.graph.vertices[self.vertex_order[vertex_index]].y, self.graph.vertices[self.vertex_order[vertex_index+1]].y], label="Edge {}{}".format(self.vertex_order[vertex_index], self.vertex_order[vertex_index+1])))
+
+        plt.legend(loc=2, fontsize='small')
+        plt.show()
+
     def goto(self, vertex_id):
         # If no vertex has been visisted
         if len(self.vertex_order) == 0:
@@ -109,12 +127,22 @@ class Graph(object):
     def plot(self):
         x = list([])
         y = list([])
+        plots = list([])
 
         for vertex in self.vertices:
             x.append(vertex.x)
             y.append(vertex.y)
 
-        plt.plot(x,y)
+        vertex_plot = plt.scatter(x,y, label="Vertices")
+        plots.append(vertex_plot)
+
+        for vertex1 in self.vertices:
+            for vertex2 in self.vertices:
+                if vertex1 != vertex2:
+                    plots.append(plt.plot([vertex1.x, vertex2.x], [vertex1.y, vertex2.y], label="Edge {}{}".format(vertex1.vertex_id, vertex2.vertex_id)))
+
+        plt.legend(loc=2, fontsize='small')
+        plt.show()
 
     def get_unvisited_vertex_ids(self):
         return [vertex.vertex_id for vertex in self.vertices if not vertex.visited]

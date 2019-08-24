@@ -81,6 +81,8 @@ if __name__ == "__main__":
         # Solve the graph using the solve_method provided
         print("\n=== Displaying Solution ===")
         if solve_method == 'brute_force':
-            print("brute_force_solution", str(TravelingSalesman.brute_force_solution(graph)))
+            result = TravelingSalesman.brute_force_solution(graph)
+            print("brute_force_solution", str(result))
+            result.plot()
         else:
             print("Invalid solve_method.  Current implemented solve methods include: brute_force")
