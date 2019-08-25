@@ -1,6 +1,9 @@
 #!/usr/bin/python
 from Graph import Vertex
 import numpy as np
+import re
+import os
+import time
 
 class FileHandler():
     @staticmethod
@@ -33,3 +36,43 @@ class FileHandler():
 
         # Return the list of Vertex objects
         return vertices
+
+    @staticmethod
+    def enforce_path(purposed_path):
+        if not os.path.exists(purposed_path):
+            os.makedirs(purposed_path)
+
+    @staticmethod
+    def log_route(route, route_log_path):
+        route_log = open(route_log_path, "a+")
+
+        route_log.write(str(route) + "\n")
+
+        route_log.close()
+
+    @staticmethod
+    def find_minimum_route(route_log_path):
+        minimum_route_list = list([])
+        minimum_route_distance = None
+
+        with open(route_log_path, "r") as route_log:
+            route_line = route_log.readline()
+
+            while(route_line != ''):
+                if minimum_route_distance is None:
+                    data = route_line.split('|')
+                    minimum_route_list = [int(re.search(r'\d+', vertex).group()) for vertex in data[0].split(',')]
+                    minimum_route_distance = float(data[1])
+
+                else:
+                    data = route_line.split('|')
+                    route_list = [int(re.search(r'\d+', vertex).group()) for vertex in data[0].split(',')]
+                    route_distance = float(data[1])
+
+                    if route_distance < minimum_route_distance:
+                        minimum_route_list = route_list
+                        minimum_route_distance = route_distance
+
+                route_line = route_log.readline()
+
+        return minimum_route_list, minimum_route_distance

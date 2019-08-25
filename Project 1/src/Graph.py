@@ -25,7 +25,7 @@ class Route(object):
         return self.distance_traveled >= other.distance_traveled
 
     def __str__(self):
-        return str(self.vertex_order) + ", " + str(self.distance_traveled)
+        return str(self.vertex_order) + "|" + str(self.distance_traveled)
 
     def plot(self):
         x = list([])
@@ -144,6 +144,25 @@ class Graph(object):
         plt.legend(loc=2, fontsize='small')
         plt.show()
 
+    def plot_route(self, route_order):
+        x = list([])
+        y = list([])
+        plots = list([])
+
+        for vertex in self.vertices:
+            x.append(vertex.x)
+            y.append(vertex.y)
+
+        vertex_plot = plt.scatter(x,y, label="Vertices")
+        plots.append(vertex_plot)
+
+        for vertex_index in range(len(route_order)-1):
+            plots.append(plt.plot([self.vertices[route_order[vertex_index]].x, self.vertices[route_order[vertex_index+1]].x], [self.vertices[route_order[vertex_index]].y, self.vertices[route_order[vertex_index+1]].y], label="Edge {}-{}".format(route_order[vertex_index], route_order[vertex_index+1])))
+
+        plt.legend(loc=2, fontsize='small')
+        plt.show()
+
+
     def get_unvisited_vertex_ids(self):
         return [vertex.vertex_id for vertex in self.vertices if not vertex.visited]
 
@@ -152,3 +171,16 @@ class Graph(object):
             return False
         else:
             return True
+
+'''
+    def __del__(self):
+        del self.vertex_order[:]
+        del self.graph
+        del self.distance_traveled
+        del self
+'''
+'''
+    def __del__(self):
+        del self.vertices[:]
+        del self.edges
+'''
