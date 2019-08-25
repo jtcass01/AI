@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import sys
 import os
+import time
 from copy import deepcopy
 from FileHandler import FileHandler
 from Graph import Route, Graph
@@ -26,7 +27,7 @@ class TravelingSalesman():
 
                 # if all vertices have been visisted
                 if(new_route.graph.finished()):
-                    # goto the starting point
+                    # goto the current vertex id
                     new_route.goto(current_vertex_id)
                     # append the route to the list of completed routes
                     routes = np.concatenate((routes, new_route), axis=None)
@@ -57,7 +58,7 @@ if __name__ == "__main__":
 
     if len(args) != 3:
         print("Command Line Arguments should follow the format:")
-        print("TrainingSalesman.py [solve_method] [relative path to vertex_graph_file]")
+        print("python TrainingSalesman.py [solve_method] [relative path to vertex_graph_file]")
         print("\nImplemented solve_methods include: brute_force")
     else:
         # retrieve solve_method
@@ -81,8 +82,11 @@ if __name__ == "__main__":
         # Solve the graph using the solve_method provided
         print("\n=== Displaying Solution ===")
         if solve_method == 'brute_force':
+            start = time.time()
             result = TravelingSalesman.brute_force_solution(graph)
+            end = time.time()
             print("brute_force_solution", str(result))
+            print("Time elaspsed: {}".format(end-start))
             result.plot()
         else:
             print("Invalid solve_method.  Current implemented solve methods include: brute_force")
