@@ -32,16 +32,20 @@ class Route(object):
         y = list([])
         plots = list([])
 
+        # Iterate over vertices, retrieving x and y coordinates
         for vertex in self.graph.vertices:
             x.append(vertex.x)
             y.append(vertex.y)
 
+        # Plot the vertices
         vertex_plot = plt.scatter(x,y, label="Vertices")
         plots.append(vertex_plot)
 
+        # Plot the route
         for vertex_index in range(len(self.vertex_order)-1):
             plots.append(plt.plot([self.graph.vertices[self.vertex_order[vertex_index]].x, self.graph.vertices[self.vertex_order[vertex_index+1]].x], [self.graph.vertices[self.vertex_order[vertex_index]].y, self.graph.vertices[self.vertex_order[vertex_index+1]].y], label="Edge {}-{}".format(self.vertex_order[vertex_index], self.vertex_order[vertex_index+1])))
 
+        # Show the graph with a legend
         plt.legend(loc=2, fontsize='small')
         plt.show()
 
@@ -129,18 +133,22 @@ class Graph(object):
         y = list([])
         plots = list([])
 
+        # Iterate over vertices, retrieving x and y coordinates
         for vertex in self.vertices:
             x.append(vertex.x)
             y.append(vertex.y)
 
+        # Plot the vertices
         vertex_plot = plt.scatter(x,y, label="Vertices")
         plots.append(vertex_plot)
 
+        # Plot the edges
         for vertex1 in self.vertices:
             for vertex2 in self.vertices:
                 if vertex1 != vertex2:
                     plots.append(plt.plot([vertex1.x, vertex2.x], [vertex1.y, vertex2.y], label="Edge {}-{}".format(vertex1.vertex_id, vertex2.vertex_id)))
 
+        # Show the graph with a legend
         plt.legend(loc=2, fontsize='small')
         plt.show()
 
@@ -149,16 +157,20 @@ class Graph(object):
         y = list([])
         plots = list([])
 
+        # Iterate over vertices, retrieving x and y coordinates
         for vertex in self.vertices:
             x.append(vertex.x)
             y.append(vertex.y)
 
+        # Plot the vertices
         vertex_plot = plt.scatter(x,y, label="Vertices")
         plots.append(vertex_plot)
 
+        # Plot the route
         for vertex_index in range(len(route_order)-1):
             plots.append(plt.plot([self.vertices[route_order[vertex_index]].x, self.vertices[route_order[vertex_index+1]].x], [self.vertices[route_order[vertex_index]].y, self.vertices[route_order[vertex_index+1]].y], label="Edge {}-{}".format(route_order[vertex_index], route_order[vertex_index+1])))
 
+        # Show the graph with a legend
         plt.legend(loc=2, fontsize='small')
         plt.show()
 
@@ -171,16 +183,3 @@ class Graph(object):
             return False
         else:
             return True
-
-'''
-    def __del__(self):
-        del self.vertex_order[:]
-        del self.graph
-        del self.distance_traveled
-        del self
-'''
-'''
-    def __del__(self):
-        del self.vertices[:]
-        del self.edges
-'''

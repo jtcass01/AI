@@ -39,6 +39,7 @@ class FileHandler():
 
     @staticmethod
     def enforce_path(purposed_path):
+        # If folders don't exist along the path, create them.
         if not os.path.exists(purposed_path):
             os.makedirs(purposed_path)
 
@@ -55,24 +56,33 @@ class FileHandler():
         minimum_route_list = list([])
         minimum_route_distance = None
 
+        # Open file
         with open(route_log_path, "r") as route_log:
+            # Read the first line from the route_log
             route_line = route_log.readline()
 
+            # Continue to read lines until EOF
             while(route_line != ''):
+                # Initialize minimum_route_distance to first route in file if not doneso.
                 if minimum_route_distance is None:
                     data = route_line.split('|')
+                    # Retrieve the list from string representation.
                     minimum_route_list = [int(re.search(r'\d+', vertex).group()) for vertex in data[0].split(',')]
+                    # Retrieve distance traveled
                     minimum_route_distance = float(data[1])
-
                 else:
                     data = route_line.split('|')
+                    # Retrieve the list from string representation.
                     route_list = [int(re.search(r'\d+', vertex).group()) for vertex in data[0].split(',')]
+                    # Retrieve distance traveled
                     route_distance = float(data[1])
 
+                    # Update new minimum if shorter distance.
                     if route_distance < minimum_route_distance:
                         minimum_route_list = route_list
                         minimum_route_distance = route_distance
 
-                route_line = route_log.readline()
+                    route_line = route_log.readline()
 
+        # return the identified minimum route vertex order and distance traveled.
         return minimum_route_list, minimum_route_distance

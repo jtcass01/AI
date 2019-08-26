@@ -11,6 +11,7 @@ import numpy as np
 class TravelingSalesman():
     @staticmethod
     def brute_force_solution(graph, current_vertex_id=0, distance_traveled = 0, reduce_ram_usage=False):
+        # Generate route log path
         if reduce_ram_usage:
             route_log_path =os.getcwd() + os.path.sep + ".." + os.path.sep + "logs" + os.path.sep + "RouteLog_{0}_{1}".format(len(graph.vertices), str(time.time())[:9])
 
@@ -34,7 +35,7 @@ class TravelingSalesman():
                     new_route.goto(current_vertex_id)
 
                     if reduce_ram_usage:
-                        # Log route to finished route to hard disk
+                        # Log finished route to hard disk
                         FileHandler.log_route(new_route, route_log_path)
                         # Delete from RAM
                         del new_route
@@ -64,6 +65,7 @@ class TravelingSalesman():
 
         if reduce_ram_usage:
             del routes
+            # Sift file located at route_log_path for the shortest route
             return FileHandler.find_minimum_route(route_log_path)
         else:
             # Identify the route with minimum distance traveled
@@ -86,7 +88,7 @@ if __name__ == "__main__":
         # Read the vertices from the vertex graph file.
         vertices = FileHandler.read_vertices(os.getcwd() + os.path.sep + vertex_graph_file)
 
-        if len(vertices) > 9:
+        if len(vertices) > 3:
             reduce_ram_usage = True
         else:
             reduce_ram_usage = False
