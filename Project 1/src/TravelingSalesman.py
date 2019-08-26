@@ -88,7 +88,7 @@ if __name__ == "__main__":
         # Read the vertices from the vertex graph file.
         vertices = FileHandler.read_vertices(os.getcwd() + os.path.sep + vertex_graph_file)
 
-        if len(vertices) > 3:
+        if len(vertices) > 9:
             reduce_ram_usage = True
         else:
             reduce_ram_usage = False
