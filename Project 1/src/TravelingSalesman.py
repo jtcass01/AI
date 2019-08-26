@@ -34,7 +34,9 @@ class TravelingSalesman():
                     new_route.goto(current_vertex_id)
 
                     if reduce_ram_usage:
+                        # Log route to finished route to hard disk
                         FileHandler.log_route(new_route, route_log_path)
+                        # Delete from RAM
                         del new_route
                     else:
                         # append the route to the list of completed routes
@@ -84,7 +86,7 @@ if __name__ == "__main__":
         # Read the vertices from the vertex graph file.
         vertices = FileHandler.read_vertices(os.getcwd() + os.path.sep + vertex_graph_file)
 
-        if len(vertices) > 3:
+        if len(vertices) > 9:
             reduce_ram_usage = True
         else:
             reduce_ram_usage = False
