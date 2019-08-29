@@ -143,10 +143,9 @@ class Graph(object):
         plots.append(vertex_plot)
 
         # Plot the edges
-        for vertex1 in self.vertices:
-            for vertex2 in self.vertices:
-                if vertex1 != vertex2:
-                    plots.append(plt.plot([vertex1.x, vertex2.x], [vertex1.y, vertex2.y], label="Edge {}-{}".format(vertex1.vertex_id, vertex2.vertex_id)))
+        for vertex in self.vertices:
+            for adjacent_vertex in vertex.adjacent_vertices:
+                plots.append(plt.plot([vertex.x, adjacent_vertex.x], [vertex.y, adjacent_vertex.y], label="Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)))
 
         # Show the graph with a legend
         plt.legend(loc=2, fontsize='small')

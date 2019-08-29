@@ -9,7 +9,7 @@ import time
 class FileHandler():
     @staticmethod
     def read_adjacency_matrix(adjacency_matrix_file_path):
-        adjancency_matrix = pd.read_csv(adjacency_matrix_file_path)
+        adjancency_matrix = pd.read_csv(adjacency_matrix_file_path, dtype='int')
         return adjancency_matrix
 
     @staticmethod
@@ -37,21 +37,22 @@ class FileHandler():
             vertex_file.close()
 
         print(adjacency_matrix)
+        print(vertices)
 
         if adjacency_matrix is None:
             # Create a list of adjacent vertices for all vertices in the list
             for index, vertex in enumerate(vertices):
                 vertex.adjacent_vertices = [adjacent_vertex for adjacent_vertex in vertices if adjacent_vertex != vertex]
         else:
-            for row_index, row in enumerate(adjacency_matrix):
-                print(row)
-                for column_index, relation in enumerate(row):
-                    print(row_index, column_index)
-                    if relation:
-                        vertices[row_index].adjacent_vertices.append(vertices[column_index])
-                        print()
-                        print(row_index, column_index)
-                        print()
+            for row_index, row in adjacency_matrix.iterrows():
+#                print("row:", row, type(row))
+                for column_index, relation in row.items():
+#                    print("row_index: ", row_index, type(row_index), "column_index", column_index, type(column_index))
+                    if relation == 1:
+                        vertices[row_index].adjacent_vertices.append(vertices[int(column_index)])
+                        print("relation found @ row_index: ", row_index, " column_index", column_index)
+                        print("== Updated adjacent vertices ==")
+                        vertices[row_index].display()
 
         # Return the list of Vertex objects
         return vertices

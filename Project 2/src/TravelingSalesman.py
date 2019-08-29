@@ -122,5 +122,9 @@ if __name__ == "__main__":
                 graph.plot_route(result[0])
             else:
                 result.plot()
+        elif algorithm == "BFS":
+            pass
+        elif algorithm == "DFS":
+            pass
         else:
             print("Invalid solve_method.  Current implemented solve methods include: brute_force")
