@@ -1,11 +1,17 @@
 #!/usr/bin/python
 from Graph import Vertex
 import numpy as np
+import pandas as pd
 import re
 import os
 import time
 
 class FileHandler():
+    @staticmethod
+    def read_adjacency_matrix(adjacency_matrix_file_path):
+        adjancency_matrix = pd.read_csv(adjacency_matrix_file_path)
+        return adjancency_matrix
+
     @staticmethod
     def read_graph(vertex_file_path, adjacency_matrix=None):
         # Initialize list and index
@@ -30,10 +36,22 @@ class FileHandler():
         finally:
             vertex_file.close()
 
+        print(adjacency_matrix)
+
         if adjacency_matrix is None:
             # Create a list of adjacent vertices for all vertices in the list
             for index, vertex in enumerate(vertices):
                 vertex.adjacent_vertices = [adjacent_vertex for adjacent_vertex in vertices if adjacent_vertex != vertex]
+        else:
+            for row_index, row in enumerate(adjacency_matrix):
+                print(row)
+                for column_index, relation in enumerate(row):
+                    print(row_index, column_index)
+                    if relation:
+                        vertices[row_index].adjacent_vertices.append(vertices[column_index])
+                        print()
+                        print(row_index, column_index)
+                        print()
 
         # Return the list of Vertex objects
         return vertices

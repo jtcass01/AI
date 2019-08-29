@@ -73,22 +73,25 @@ class TravelingSalesman():
 
 if __name__ == "__main__":
     # Retrieve command line arguments
-    args = sys.argv
-
-    if len(args) != 3:
+    if len(sys.argv) != 4:
         print("Command Line Arguments should follow the format:")
-        print("python TrainingSalesman.py [solve_method] [relative path to vertex_graph_file]")
-        print("\nImplemented solve_methods include: brute_force")
+        print("python TrainingSalesman.py [algorithm] [relative path to vertex_graph_file] [relative path to adjacency_matrix_file]")
+        print("\nImplemented algorithms include: brute_force")
     else:
         # retrieve solve_method
-        solve_method = sys.argv[1]
+        algorithm = sys.argv[1]
         # retrieve relative path to vertex_graph_file
-        vertex_graph_file = sys.argv[2]
+        vertex_graph_file_path = sys.argv[2]
+        # retrieve relative path to adjacency_matrix_file_path
+        adjacency_matrix_file_path = sys.argv[3]
+
+        # Read the adjacency matrix
+        adjacency_matrix = FileHandler.read_adjacency_matrix(os.getcwd() + os.path.sep + adjacency_matrix_file_path)
 
         # Read the vertices from the vertex graph file.
-        vertices = FileHandler.read_fully_connected_graph(os.getcwd() + os.path.sep + vertex_graph_file)
+        vertices = FileHandler.read_graph(os.getcwd() + os.path.sep + vertex_graph_file_path, adjacency_matrix)
 
-        if len(vertices) > 9:
+        if len(vertices) > 9 and algorithm == 'brute_force':
             reduce_ram_usage = True
         else:
             reduce_ram_usage = False
@@ -105,7 +108,7 @@ if __name__ == "__main__":
 
         # Solve the graph using the solve_method provided
         print("\n=== Displaying Solution ===")
-        if solve_method == 'brute_force':
+        if algorithm == 'brute_force':
             start = time.time()
             if reduce_ram_usage:
                 FileHandler.enforce_path(os.getcwd() + os.path.sep + ".." + os.path.sep + "logs" + os.path.sep)
