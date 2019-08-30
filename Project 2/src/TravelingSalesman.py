@@ -10,10 +10,11 @@ import numpy as np
 
 class TravelingSalesman():
     @staticmethod
-    def brute_force_solution(graph, current_vertex_id=0, distance_traveled = 0, reduce_ram_usage=False):
+    def brute_force_solution(graph, current_vertex_id=0, reduce_ram_usage=False):
         # Generate route log path
         if reduce_ram_usage:
-            route_log_path =os.getcwd() + os.path.sep + ".." + os.path.sep + "logs" + os.path.sep + "RouteLog_{0}_{1}".format(len(graph.vertices), str(time.time())[:9])
+            route_log_path =os.getcwd() + os.path.sep + ".." + os.path.sep + "logs" + os.path.sep + \
+                            "RouteLog_{0}_{1}".format(len(graph.vertices), str(time.time())[:9])
 
         # Recursive function for trying all adjacent vertices.
         def try_all_open_routes_from_current_route(route, reduce_ram_usage=False):
@@ -30,7 +31,7 @@ class TravelingSalesman():
                 new_route.goto(adjacent_vertex.vertex_id)
 
                 # if all vertices have been visisted
-                if(new_route.graph.finished()):
+                if new_route.graph.finished():
                     # goto the current vertex id
                     new_route.goto(current_vertex_id)
 
@@ -71,11 +72,13 @@ class TravelingSalesman():
             # Identify the route with minimum distance traveled
             return min(routes)
 
+
 if __name__ == "__main__":
     # Retrieve command line arguments
     if len(sys.argv) != 4:
         print("Command Line Arguments should follow the format:")
-        print("python TrainingSalesman.py [algorithm] [relative path to vertex_graph_file] [relative path to adjacency_matrix_file]")
+        print("python TrainingSalesman.py [algorithm] [relative path to vertex_graph_file]"
+              " [relative path to adjacency_matrix_file]")
         print("\nImplemented algorithms include: brute_force")
     else:
         # retrieve solve_method
@@ -101,7 +104,7 @@ if __name__ == "__main__":
         # Calculate edges
         graph.build_graph()
 
-        # Display the graph before solving.  TODO: Replace with plotting
+        # Display the graph before solving.
         print("\n=== Displaying Graph ===")
         print(graph)
         graph.plot()

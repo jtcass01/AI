@@ -1,7 +1,8 @@
 #!/usr/bin/python
 import matplotlib.pyplot as plt
 import pandas as pd
-import numpy as np
+import random
+
 
 class Route(object):
     def __init__(self, current_vertex_order, graph):
@@ -43,7 +44,12 @@ class Route(object):
 
         # Plot the route
         for vertex_index in range(len(self.vertex_order)-1):
-            plots.append(plt.plot([self.graph.vertices[self.vertex_order[vertex_index]].x, self.graph.vertices[self.vertex_order[vertex_index+1]].x], [self.graph.vertices[self.vertex_order[vertex_index]].y, self.graph.vertices[self.vertex_order[vertex_index+1]].y], label="Edge {}-{}".format(self.vertex_order[vertex_index], self.vertex_order[vertex_index+1])))
+            plots.append(plt.plot([self.graph.vertices[self.vertex_order[vertex_index]].x,
+                                   self.graph.vertices[self.vertex_order[vertex_index+1]].x],
+                                  [self.graph.vertices[self.vertex_order[vertex_index]].y,
+                                   self.graph.vertices[self.vertex_order[vertex_index+1]].y],
+                                  label="Edge {}-{}".format(self.vertex_order[vertex_index],
+                                                            self.vertex_order[vertex_index+1])))
 
         # Show the graph with a legend
         plt.legend(loc=2, fontsize='small')
@@ -65,6 +71,7 @@ class Route(object):
             self.vertex_order.append(vertex_id)
             # Mark the vertex as being visisted
             self.graph.vertices[vertex_id].visited = True
+
 
 class Vertex(object):
     def __init__(self, vertex_id, x, y, visited=False):
@@ -92,7 +99,8 @@ class Vertex(object):
             print(vertex)
 
     def get_unvisited_adjacent_vertex_ids(self):
-        return [adjacent_vertex for adjacent_vertex in self.adjacent_vertices if adjacent_vertex.visited == False]
+        return [adjacent_vertex for adjacent_vertex in self.adjacent_vertices if adjacent_vertex.visited is False]
+
 
 class Graph(object):
     def __init__(self, vertices):
@@ -132,6 +140,8 @@ class Graph(object):
         x = list([])
         y = list([])
         plots = list([])
+        arrow_plots = list([])
+        arrow_labels = list([])
 
         # Iterate over vertices, retrieving x and y coordinates
         for vertex in self.vertices:
@@ -139,16 +149,26 @@ class Graph(object):
             y.append(vertex.y)
 
         # Plot the vertices
-        vertex_plot = plt.scatter(x,y, label="Vertices")
+        vertex_plot = plt.scatter(x, y, label="Vertices")
         plots.append(vertex_plot)
 
         # Plot the edges
         for vertex in self.vertices:
             for adjacent_vertex in vertex.adjacent_vertices:
-                plots.append(plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y, head_width=1.5, head_length=1.5, color='#{}{}ee'.format(Graph.color_quantization(vertex.vertex_id), Graph.color_quantization(adjacent_vertex.vertex_id)), label="Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)))
+                arrow_label = "Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)
+                arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
+                                       head_width=1.5, head_length=1.5,
+                                       color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id),
+                                                              str(hex(int(random.uniform(0.2, 1)*256)))[2:],
+                                                              Graph.color_quantization(adjacent_vertex.vertex_id)),
+                                       label=arrow_label)
+
+                plots.append(arrow_plot)
+                arrow_plots.append(arrow_plot)
+                arrow_labels.append(arrow_label)
 
         # Show the graph with a legend
-        plt.legend(loc=2, fontsize='small')
+        plt.legend(arrow_plots, arrow_labels, loc=2, fontsize='small')
         plt.show()
 
     def plot_route(self, route_order):
@@ -167,12 +187,14 @@ class Graph(object):
 
         # Plot the route
         for vertex_index in range(len(route_order)-1):
-            plots.append(plt.arrow(self.vertices[route_order[vertex_index]].x, self.vertices[route_order[vertex_index]].y, self.vertices[route_order[vertex_index+1]].x-self.vertices[route_order[vertex_index]].x, self.vertices[route_order[vertex_index+1]].y-self.vertices[route_order[vertex_index]].y))
+            plots.append(plt.arrow(self.vertices[route_order[vertex_index]].x,
+                                   self.vertices[route_order[vertex_index]].y,
+                                   self.vertices[route_order[vertex_index+1]].x - self.vertices[route_order[vertex_index]].x,
+                                   self.vertices[route_order[vertex_index+1]].y - self.vertices[route_order[vertex_index]].y))
 
         # Show the graph with a legend
         plt.legend(loc=2, fontsize='small')
         plt.show()
-
 
     def get_unvisited_vertex_ids(self):
         return [vertex.vertex_id for vertex in self.vertices if not vertex.visited]
@@ -185,7 +207,8 @@ class Graph(object):
 
     @staticmethod
     def color_quantization(vertex_id):
-        assert(1 <= vertex_id and vertex_id <= 11, "Invalid vertex_id for color_quantization ({}) for color look_up.  Please update date to fit new range.".format(vertex_id))
+        assert 1 <= vertex_id <= 11, "Invalid vertex_id for color_quantization ({}) for color look_up.  " \
+                                     "Please update date to fit new range.".format(vertex_id)
 
         if vertex_id == 1:
             return "17"
