@@ -145,7 +145,7 @@ class Graph(object):
         # Plot the edges
         for vertex in self.vertices:
             for adjacent_vertex in vertex.adjacent_vertices:
-                plots.append(plt.plot([vertex.x, adjacent_vertex.x], [vertex.y, adjacent_vertex.y], label="Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)))
+                plots.append(plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y, head_width=1.5, head_length=1.5, color='#{}{}ee'.format(Graph.color_quantization(vertex.vertex_id), Graph.color_quantization(adjacent_vertex.vertex_id)), label="Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)))
 
         # Show the graph with a legend
         plt.legend(loc=2, fontsize='small')
@@ -167,7 +167,7 @@ class Graph(object):
 
         # Plot the route
         for vertex_index in range(len(route_order)-1):
-            plots.append(plt.plot([self.vertices[route_order[vertex_index]].x, self.vertices[route_order[vertex_index+1]].x], [self.vertices[route_order[vertex_index]].y, self.vertices[route_order[vertex_index+1]].y], label="Edge {}-{}".format(route_order[vertex_index], route_order[vertex_index+1])))
+            plots.append(plt.arrow(self.vertices[route_order[vertex_index]].x, self.vertices[route_order[vertex_index]].y, self.vertices[route_order[vertex_index+1]].x-self.vertices[route_order[vertex_index]].x, self.vertices[route_order[vertex_index+1]].y-self.vertices[route_order[vertex_index]].y))
 
         # Show the graph with a legend
         plt.legend(loc=2, fontsize='small')
@@ -182,3 +182,30 @@ class Graph(object):
             return False
         else:
             return True
+
+    @staticmethod
+    def color_quantization(vertex_id):
+        assert(1 <= vertex_id and vertex_id <= 11, "Invalid vertex_id for color_quantization ({}) for color look_up.  Please update date to fit new range.".format(vertex_id))
+
+        if vertex_id == 1:
+            return "17"
+        elif vertex_id == 2:
+            return "2E"
+        elif vertex_id == 3:
+            return "45"
+        elif vertex_id == 4:
+            return "5C"
+        elif vertex_id == 5:
+            return "73"
+        elif vertex_id == 6:
+            return "8A"
+        elif vertex_id == 7:
+            return "A1"
+        elif vertex_id == 8:
+            return "B8"
+        elif vertex_id == 9:
+            return "CF"
+        elif vertex_id == 10:
+            return "E6"
+        else:
+            return "FD"

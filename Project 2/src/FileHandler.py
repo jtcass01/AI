@@ -29,7 +29,7 @@ class FileHandler():
                     # split the line into index, x, and y values
                     index, x, y = line.split(" ")
                     # Create a vertex object out of these attributes and append it to the list of vertices
-                    vertices = np.concatenate((vertices, Vertex(vertex_index, float(x), float(y))), axis = None)
+                    vertices = np.concatenate((vertices, Vertex(int(index), float(x), float(y))), axis = None)
                     # Increment the vertex index by 1
                     vertex_index += 1
         # When finished, close the file.
@@ -45,14 +45,9 @@ class FileHandler():
                 vertex.adjacent_vertices = [adjacent_vertex for adjacent_vertex in vertices if adjacent_vertex != vertex]
         else:
             for row_index, row in adjacency_matrix.iterrows():
-#                print("row:", row, type(row))
                 for column_index, relation in row.items():
-#                    print("row_index: ", row_index, type(row_index), "column_index", column_index, type(column_index))
                     if relation == 1:
-                        vertices[row_index].adjacent_vertices.append(vertices[int(column_index)])
-                        print("relation found @ row_index: ", row_index, " column_index", column_index)
-                        print("== Updated adjacent vertices ==")
-                        vertices[row_index].display()
+                        vertices[row_index].adjacent_vertices.append(vertices[int(column_index)-1])
 
         # Return the list of Vertex objects
         return vertices
