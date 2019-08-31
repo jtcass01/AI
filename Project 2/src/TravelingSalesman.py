@@ -4,13 +4,36 @@ import os
 import time
 from copy import deepcopy
 from FileHandler import FileHandler
-from Graph import Route, Graph
+from Graph import Route, Graph, SearchTree
 import numpy as np
 
 
 class TravelingSalesman():
     @staticmethod
-    def brute_force_solution(graph, current_vertex_id=0, reduce_ram_usage=False):
+    def breadth_first_search(graph, source_vertex_id=1):
+        bfs_tree = SearchTree()
+
+        current_vertex = graph.vertices[source_vertex_id]
+        current_layer = 0
+        current_node = SearchTree.Node("source", current_vertex, str(current_layer))
+        node_index = 1
+        bfs_tree.add_node(current_node)
+
+        while str(current_layer) in bfs_tree.nodes.keys():
+            current_layer += 1
+            for node in bfs_tree.nodes[str(current_layer-1)]:
+                for adjacent_vertex in node.vertex.adjacent_vertices:
+                    adjacent_node = SearchTree.Node(str(node_index), adjacent_vertex, str(current_layer))
+                    node.adjacent_nodes.append(adjacent_node)
+                    bfs_tree.add_node(adjacent_node)
+                    node_index += 1
+
+        bfs_tree.display()
+
+        return bfs_tree
+
+    @staticmethod
+    def brute_force_solution(graph, current_vertex_id=1, reduce_ram_usage=False):
         # Generate route log path
         if reduce_ram_usage:
             route_log_path =os.getcwd() + os.path.sep + ".." + os.path.sep + "logs" + os.path.sep + \
@@ -113,20 +136,31 @@ if __name__ == "__main__":
         print("\n=== Displaying Solution ===")
         if algorithm == 'brute_force':
             start = time.time()
+
             if reduce_ram_usage:
                 FileHandler.enforce_path(os.getcwd() + os.path.sep + ".." + os.path.sep + "logs" + os.path.sep)
                 result = TravelingSalesman.brute_force_solution(graph, reduce_ram_usage=reduce_ram_usage)
             else:
                 result = TravelingSalesman.brute_force_solution(graph, reduce_ram_usage=reduce_ram_usage)
+
             end = time.time()
+
             print("brute_force_solution", str(result))
             print("Time elaspsed: {}".format(end-start))
+
             if reduce_ram_usage:
                 graph.plot_route(result[0])
             else:
                 result.plot()
         elif algorithm == "BFS":
-            pass
+            start = time.time()
+
+            result = TravelingSalesman.breadth_first_search(graph, 1)
+
+            end = time.time()
+            print("breadth_first_search_solution", str(result))
+            print("Time elaspsed: {}".format(end-start))
+
         elif algorithm == "DFS":
             pass
         else:

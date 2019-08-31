@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import random
 
 
@@ -232,3 +233,41 @@ class Graph(object):
             return "E6"
         else:
             return "FD"
+
+
+class SearchTree(object):
+    def __init__(self):
+        self.nodes = {}
+
+    def add_node(self, node):
+        if node.layer in self.nodes.keys():
+            if node not in self.nodes[node.layer]:
+                self.nodes[str(node.layer)].append(node)
+        else:
+            self.nodes[str(node.layer)] = [node]
+
+    def node_in_tree(self, node):
+        for layer_key in self.nodes.keys():
+            if node in self.nodes[layer_key]:
+                return True
+        return False
+
+    def display(self):
+        for layer_key in self.nodes.keys():
+            print("Layer: ", layer_key)
+            for node in self.nodes[layer_key]:
+                print(node)
+
+    class Node(object):
+        def __init__(self, node_id, vertex, layer):
+            self.node_id = node_id
+            self.vertex = vertex
+            self.layer = layer
+            self.adjacent_nodes = list([])
+
+        def __str__(self):
+            return "node_id: " + str(self.node_id) + "\nvertex: " + str(self.vertex) + "\nlayer: " + self.layer + \
+                   "\nadjacent_nodes: " + str(self.adjacent_nodes)
+
+        def __eq__(self, other):
+            return self.vertex.vertex_id == other.vertex.vertex_id
