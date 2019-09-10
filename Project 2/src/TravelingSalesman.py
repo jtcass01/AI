@@ -4,19 +4,19 @@ import os
 import time
 from copy import deepcopy
 from FileHandler import FileHandler
-from Graph import Route, Graph, SearchTree
+from Graph import Route, Graph, BreadthFirstSearchTree, DepthFirstSearchStack
 import numpy as np
 
 
 class TravelingSalesman():
     @staticmethod
     def breadth_first_search(graph, source_vertex_id=1, target_vertex_id=11):
-        bfs_tree = SearchTree()
+        bfs_tree = BreadthFirstSearchTree()
 
         current_vertex = graph.get_vertex_by_id(source_vertex_id)
         route = Route([current_vertex.vertex_id], graph)
         current_layer = 0
-        current_node = SearchTree.Node("source", current_vertex, str(current_layer), route)
+        current_node = BreadthFirstSearchTree.Node("source", current_vertex, str(current_layer), route)
         node_index = 1
         bfs_tree.add_node(current_node)
 
@@ -33,7 +33,7 @@ class TravelingSalesman():
                     current_route.goto(adjacent_vertex.vertex_id)
 
                     # Create a node representation of the vertex/route
-                    adjacent_node = SearchTree.Node(str(node_index), adjacent_vertex, str(current_layer+1), current_route)
+                    adjacent_node = BreadthFirstSearchTree.Node(str(node_index), adjacent_vertex, str(current_layer+1), current_route)
 
                     # Try to add the node
                     if bfs_tree.add_node(adjacent_node) is True:
@@ -47,13 +47,49 @@ class TravelingSalesman():
             # Iterate to the next layer to be done
             current_layer += 1
 
+        # Iterate over the final bfs_tree looking for the target_vertex_id
         for current_layer in bfs_tree.nodes.keys():
             for node in bfs_tree.nodes[current_layer]:
                 if node.vertex.vertex_id == target_vertex_id:
-                    # Adjust indices within minimum_route
+                    # Adjust indices within minimum_route to match initial representation
                     for vertex_id in node.minimum_route.vertex_order:
                         vertex_id += 1
+                    # Return minimum route.
                     return node.minimum_route
+
+    @staticmethod
+    def depth_first_search(graph, source_vertex_id=1, target_vertex_id=11):
+        dfs_stack = DepthFirstSearchStack()
+
+        def search_deeper(current_vertex, current_route):
+            # Get unfinished remaining adjacent vertices
+            remaining_adjacent_vertices = dfs_stack.get_unfinished_adjacent_vertices(current_vertex.adjacent_vertices)
+            # Update the route with the new vertex
+            current_route.goto(current_vertex.vertex_id)
+            # Push the current vertex ontop of the dfs stack
+            dfs_stack.push(current_vertex, current_route)
+
+            # If there are no remaining adjacent vertices
+            if len(remaining_adjacent_vertices) == 0:
+                # Pop the finished node off the stack
+                finished_node = dfs_stack.pop()
+                # walk back from the route since no longer part of it
+                current_route.walk_back()
+                # Mark the node complete. Update lists.
+                dfs_stack.node_complete(finished_node)
+
+                # If there are still items on the stack.
+                if len(dfs_stack.node_stack) > 0:
+                    # Search deeper using the previous item as guide.
+                    search_deeper(dfs_stack.node_stack[-1].vertex, current_route)
+            else:
+                # Search the first adjacent vertex
+                search_deeper(remaining_adjacent_vertices[0], current_route)
+
+        source_vertex = graph.get_vertex_by_id(source_vertex_id)
+        route = Route([], graph)
+        search_deeper(source_vertex, route)
+        return dfs_stack.get_path_to_finished_vertex_id(target_vertex_id)
 
     @staticmethod
     def brute_force_solution(graph, current_vertex_id=1, reduce_ram_usage=False):
@@ -175,18 +211,26 @@ if __name__ == "__main__":
                 graph.plot_route(result[0])
             else:
                 result.plot()
-        elif algorithm == "bfs":
+        elif algorithm == "bfs" or algorithm == "BFS":
             start = time.time()
 
-            result = TravelingSalesman.breadth_first_search(graph, 1)
+            result = TravelingSalesman.breadth_first_search(graph, 1, 11)
 
             end = time.time()
-            print("breadth_first_search_solution", str(result))
+            print("breadth_first_search solution", str(result))
             print("Time elaspsed: {}".format(end-start))
 
             graph.plot_route(result.vertex_order)
 
-        elif algorithm == "dfs":
-            pass
+        elif algorithm == "dfs" or algorithm == "DFS":
+            start = time.time()
+
+            result = TravelingSalesman.depth_first_search(graph, 1, 11)
+
+            end = time.time()
+            print("depth_first_search solution", str(result))
+            print("Time elaspsed: {}".format(end-start))
+
+            graph.plot_route(result.vertex_order)
         else:
             print("Invalid solve_method.  Current implemented solve methods include: brute_force")

@@ -60,6 +60,13 @@ class Route(object):
         plt.legend(loc=2, fontsize='small')
         plt.show()
 
+    def walk_back(self):
+        twice_last_visited_vertex = self.get_vertex_by_id(self.vertex_order[-2])
+        last_visited_vertex = self.get_vertex_by_id(self.vertex_order[-1])
+        self.distance_traveled -= last_visited_vertex.compute_distance(twice_last_visited_vertex)
+        self.vertex_order.pop()
+        print("New route: ", str(self))
+
     def goto(self, vertex_id):
         destination_vertex = self.get_vertex_by_id(vertex_id)
 
@@ -255,7 +262,7 @@ class Graph(object):
             return "FD"
 
 
-class SearchTree(object):
+class BreadthFirstSearchTree(object):
     def __init__(self):
         self.nodes = {}
 
@@ -354,3 +361,57 @@ class SearchTree(object):
 
         def __eq__(self, other):
             return self.vertex.vertex_id == other.vertex.vertex_id
+
+class DepthFirstSearchStack(object):
+    def __init__(self):
+        self.node_stack = list([])
+        self.finished_nodes = list([])
+        self.finished_vertices = list([])
+
+    def __str__(self):
+        string = "==== Depth First Search Stack ===="
+        string += "\nNode Stack: \n"
+        for node in self.node_stack:
+            string += str(node) + "\n"
+        string += "\nFinished Nodes: \n"
+        for node in self.finished_nodes:
+            string += str(node) + "\n"
+        string += "\nFinished Vertices: \n"
+        for vertex in self.finished_vertices:
+            string += str(vertex) + "\n"
+        return string
+
+    def get_unfinished_adjacent_vertices(self, adjacent_vertices):
+        return [vertex for vertex in adjacent_vertices if vertex not in self.finished_vertices]
+
+    def push(self, vertex, current_route):
+        matching_vertices = [node.vertex for node in self.node_stack if node.vertex == vertex]
+
+        if vertex not in matching_vertices:
+            node = DepthFirstSearchStack.Node(vertex.vertex_id, vertex, current_route)
+            self.node_stack.append(node)
+
+    def get_path_to_finished_vertex_id(self, vertex_id):
+        return [node.minimum_route for node in self.finished_nodes if node.vertex.vertex_id == vertex_id][0]
+
+    def pop(self):
+        top = self.node_stack[-1]
+        self.node_stack.remove(top)
+        return top
+
+    def node_complete(self, node):
+        print("Node marked as complete:" + str(node))
+
+        self.finished_nodes.append(node)
+        self.finished_vertices.append(node.vertex)
+        node.finished = True
+
+    class Node(object):
+        def __init__(self, node_id, vertex, minimum_route):
+            self.node_id = node_id
+            self.vertex = vertex
+            self.minimum_route = deepcopy(minimum_route)
+            self.finished = False
+
+        def __str__(self):
+            return "node_id: " + str(self.node_id) + " finished: " + str(self.finished) + "\nvertex: " + str(self.vertex) + "\nminimum_route: " + str(self.minimum_route)
