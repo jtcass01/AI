@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import random
+from copy import deepcopy
 
 
 class Route(object):
@@ -28,6 +29,9 @@ class Route(object):
 
     def __str__(self):
         return str(self.vertex_order) + "|" + str(self.distance_traveled)
+
+    def get_vertex_by_id(self, vertex_id):
+        return [vertex for vertex in self.graph.vertices if vertex.vertex_id == vertex_id][0]
 
     def plot(self):
         x = list([])
@@ -57,6 +61,8 @@ class Route(object):
         plt.show()
 
     def goto(self, vertex_id):
+        destination_vertex = self.get_vertex_by_id(vertex_id)
+
         # If no vertex has been visisted
         if len(self.vertex_order) == 0:
             # Initialize the distance traveled to 0
@@ -64,14 +70,15 @@ class Route(object):
             # Add the starting vertex to the vertex_order
             self.vertex_order.append(vertex_id)
             # Mart the vertex as being visisted
-            self.graph.vertices[vertex_id].visited = True
+            destination_vertex.visited = True
         else:
+            last_visited_vertex = self.get_vertex_by_id(self.vertex_order[-1])
             # Find the distance between the goto vertex and the last vertex visited
-            self.distance_traveled += self.graph.vertices[self.vertex_order[-1]].compute_distance(self.graph.vertices[vertex_id])
+            self.distance_traveled += last_visited_vertex.compute_distance(destination_vertex)
             # Add the new vertex to the vertex_order
             self.vertex_order.append(vertex_id)
             # Mark the vertex as being visisted
-            self.graph.vertices[vertex_id].visited = True
+            destination_vertex.visited = True
 
 
 class Vertex(object):
@@ -137,6 +144,9 @@ class Graph(object):
 
         return self.edges
 
+    def get_vertex_by_id(self, vertex_id):
+        return [vertex for vertex in self.vertices if vertex.vertex_id == vertex_id][0]
+
     def plot(self):
         x = list([])
         y = list([])
@@ -158,7 +168,7 @@ class Graph(object):
             for adjacent_vertex in vertex.adjacent_vertices:
                 arrow_label = "Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)
                 arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
-                                       head_width=1.5, head_length=1.5,
+                                       head_width=1, head_length=1,
                                        color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id),
                                                               str(hex(int(random.uniform(0.2, 1)*256)))[2:],
                                                               Graph.color_quantization(adjacent_vertex.vertex_id)),
@@ -176,6 +186,8 @@ class Graph(object):
         x = list([])
         y = list([])
         plots = list([])
+        arrow_plots = list([])
+        arrow_labels = list([])
 
         # Iterate over vertices, retrieving x and y coordinates
         for vertex in self.vertices:
@@ -188,13 +200,21 @@ class Graph(object):
 
         # Plot the route
         for vertex_index in range(len(route_order)-1):
-            plots.append(plt.arrow(self.vertices[route_order[vertex_index]].x,
-                                   self.vertices[route_order[vertex_index]].y,
-                                   self.vertices[route_order[vertex_index+1]].x - self.vertices[route_order[vertex_index]].x,
-                                   self.vertices[route_order[vertex_index+1]].y - self.vertices[route_order[vertex_index]].y))
+            arrow_label = "Edge {}->{}".format(route_order[vertex_index], route_order[vertex_index+1])
+            arrow_plot = plt.arrow(self.vertices[route_order[vertex_index]-1].x,
+                                   self.vertices[route_order[vertex_index]-1].y,
+                                   self.vertices[route_order[vertex_index+1]-1].x - self.vertices[route_order[vertex_index]-1].x,
+                                   self.vertices[route_order[vertex_index+1]-1].y - self.vertices[route_order[vertex_index]-1].y,
+                                   head_width=1, head_length=1,
+                                   color='#{}{}{}'.format(Graph.color_quantization( self.vertices[route_order[vertex_index]-1].vertex_id),
+                                                          str(hex(int(random.uniform(0.2, 1)*256)))[2:],
+                                                          Graph.color_quantization(self.vertices[route_order[vertex_index+1]-1].vertex_id)),
+                                   label=arrow_label)
+            arrow_labels.append(arrow_label)
+            arrow_plots.append(arrow_plot)
 
         # Show the graph with a legend
-        plt.legend(loc=2, fontsize='small')
+        plt.legend(arrow_plots, arrow_labels, loc=2, fontsize='small')
         plt.show()
 
     def get_unvisited_vertex_ids(self):
@@ -239,12 +259,39 @@ class SearchTree(object):
     def __init__(self):
         self.nodes = {}
 
-    def add_node(self, node):
-        if node.layer in self.nodes.keys():
-            if node not in self.nodes[node.layer]:
-                self.nodes[str(node.layer)].append(node)
+    def add_node(self, new_node):
+        print("\nAttempting to Add node:")
+        print(new_node)
+
+        for layer_key in self.nodes.keys():
+            for node_index, node in enumerate(self.nodes[layer_key]):
+                if node.vertex.vertex_id == new_node.vertex.vertex_id:
+                    print("new_node found within dictionary of nodes.")
+                    print("previous node: ")
+                    print(node)
+                    # vertex has exists within searchtree already, see if new_node
+                    # has a shorter route.  If so replace.  If not, ignore node.
+                    if new_node.minimum_route < node.minimum_route:
+                        print("new_node < node. Adding")
+                        self.nodes[layer_key][node_index] = deepcopy(new_node)
+                        return True
+                    else:
+                        print("new_node > node.  Ignoring")
+                        return False
+
+        print("new_node not found within dictionary of nodes.")
+        # If node does not exist, it is minimum route node by default.
+        # If new_node's layer has been created
+        if new_node.layer in self.nodes.keys():
+            print("new_node's layer is not new.  Appending.")
+            # Append the new_node to the dictionary's list at layer L
+            self.nodes[str(new_node.layer)].append(new_node)
         else:
-            self.nodes[str(node.layer)] = [node]
+            print("new_node's layer is new.  Starting new list.")
+            # else, create a new list for layer L's nodes
+            self.nodes[str(new_node.layer)] = [new_node]
+
+        return True
 
     def node_in_tree(self, node):
         for layer_key in self.nodes.keys():
@@ -252,22 +299,58 @@ class SearchTree(object):
                 return True
         return False
 
+    def vertex_in_tree(self, vertex):
+        for layer_key in self.nodes.keys():
+            for node in self.nodes[layer_key]:
+                if node.vertex.vertex_id == vertex.vertex_id:
+                    return True
+        return False
+
     def display(self):
         for layer_key in self.nodes.keys():
-            print("Layer: ", layer_key)
+            print()
+            print("===  Layer: ", layer_key, "===")
             for node in self.nodes[layer_key]:
                 print(node)
+                print()
+
+    def plot(self):
+        x = list([])
+        y = list([])
+        plots = list([])
+
+        # Iterate over vertices, retrieving x and y coordinates
+        for layer_key in self.nodes.keys():
+            for node in self.nodes[layer_key]:
+                x.append(node.vertex.x)
+                y.append(node.vertex.y)
+
+        # Show the graph with a legend
+        plt.legend(loc=2, fontsize='small')
+        plt.show()
 
     class Node(object):
-        def __init__(self, node_id, vertex, layer):
+        def __init__(self, node_id, vertex, layer, minimum_route):
             self.node_id = node_id
             self.vertex = vertex
             self.layer = layer
             self.adjacent_nodes = list([])
+            self.minimum_route = deepcopy(minimum_route)
 
         def __str__(self):
-            return "node_id: " + str(self.node_id) + "\nvertex: " + str(self.vertex) + "\nlayer: " + self.layer + \
-                   "\nadjacent_nodes: " + str(self.adjacent_nodes)
+            string = "node_id: " + str(self.node_id) + "\nvertex: " + str(self.vertex) + "\nlayer: " + self.layer + "\nadjacent_nodes [vertex_ids]: "
+
+            string += "["
+
+            for node in self.adjacent_nodes:
+                string += str(node.vertex.vertex_id) + ","
+
+            string += "]"
+
+            string += "\nminimum_route:" + str(self.minimum_route)
+
+            return string
+
 
         def __eq__(self, other):
             return self.vertex.vertex_id == other.vertex.vertex_id

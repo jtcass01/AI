@@ -10,27 +10,50 @@ import numpy as np
 
 class TravelingSalesman():
     @staticmethod
-    def breadth_first_search(graph, source_vertex_id=1):
+    def breadth_first_search(graph, source_vertex_id=1, target_vertex_id=11):
         bfs_tree = SearchTree()
 
-        current_vertex = graph.vertices[source_vertex_id]
+        current_vertex = graph.get_vertex_by_id(source_vertex_id)
+        route = Route([current_vertex.vertex_id], graph)
         current_layer = 0
-        current_node = SearchTree.Node("source", current_vertex, str(current_layer))
+        current_node = SearchTree.Node("source", current_vertex, str(current_layer), route)
         node_index = 1
         bfs_tree.add_node(current_node)
 
+        # Iterate over each layer in the bfs tree and create the next layer
         while str(current_layer) in bfs_tree.nodes.keys():
-            current_layer += 1
-            for node in bfs_tree.nodes[str(current_layer-1)]:
+            # Iterate over all nodes
+            for node in bfs_tree.nodes[str(current_layer)]:
+                # Loop over its adjacent vertices
                 for adjacent_vertex in node.vertex.adjacent_vertices:
-                    adjacent_node = SearchTree.Node(str(node_index), adjacent_vertex, str(current_layer))
-                    node.adjacent_nodes.append(adjacent_node)
-                    bfs_tree.add_node(adjacent_node)
-                    node_index += 1
+                    # Copy the route of the current node
+                    current_route = deepcopy(node.minimum_route)
 
-        bfs_tree.display()
+                    # Update the current route with the new vertex goto
+                    current_route.goto(adjacent_vertex.vertex_id)
 
-        return bfs_tree
+                    # Create a node representation of the vertex/route
+                    adjacent_node = SearchTree.Node(str(node_index), adjacent_vertex, str(current_layer+1), current_route)
+
+                    # Try to add the node
+                    if bfs_tree.add_node(adjacent_node) is True:
+                        # If added, append the node and increment the node_index
+                        node.adjacent_nodes.append(adjacent_node)
+                        node_index += 1
+
+                    print("=== DISPLAYING UPDATED TREE === ")
+                    bfs_tree.display()
+
+            # Iterate to the next layer to be done
+            current_layer += 1
+
+        for current_layer in bfs_tree.nodes.keys():
+            for node in bfs_tree.nodes[current_layer]:
+                if node.vertex.vertex_id == target_vertex_id:
+                    # Adjust indices within minimum_route
+                    for vertex_id in node.minimum_route.vertex_order:
+                        vertex_id += 1
+                    return node.minimum_route
 
     @staticmethod
     def brute_force_solution(graph, current_vertex_id=1, reduce_ram_usage=False):
@@ -102,7 +125,7 @@ if __name__ == "__main__":
         print("Command Line Arguments should follow the format:")
         print("python TrainingSalesman.py [algorithm] [relative path to vertex_graph_file]"
               " [relative path to adjacency_matrix_file]")
-        print("\nImplemented algorithms include: brute_force")
+        print("\nImplemented algorithms include: brute_force, bfs, dfs")
     else:
         # retrieve solve_method
         algorithm = sys.argv[1]
@@ -152,7 +175,7 @@ if __name__ == "__main__":
                 graph.plot_route(result[0])
             else:
                 result.plot()
-        elif algorithm == "BFS":
+        elif algorithm == "bfs":
             start = time.time()
 
             result = TravelingSalesman.breadth_first_search(graph, 1)
@@ -161,7 +184,9 @@ if __name__ == "__main__":
             print("breadth_first_search_solution", str(result))
             print("Time elaspsed: {}".format(end-start))
 
-        elif algorithm == "DFS":
+            graph.plot_route(result.vertex_order)
+
+        elif algorithm == "dfs":
             pass
         else:
             print("Invalid solve_method.  Current implemented solve methods include: brute_force")
