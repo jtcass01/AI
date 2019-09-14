@@ -8,6 +8,34 @@ from Graph import Route, Graph, BreadthFirstSearchTree, DepthFirstSearchStack
 import numpy as np
 
 class TravelingSalesman():
+    class GreedyAlgorithm(object):
+        def __init__(self, route):
+            self.route = route
+            self.reference = 1
+            self.done = False
+
+        def step_forward(self):
+            self.route.goto(self.choose_next_vertex())
+
+            if len(self.route.vertex_order) == len(self.route.graph.vertices):
+                self.done = True
+
+        def step_backward(self):
+            if len(self.route.vertex_order) > 0:
+                self.route.walk_back()
+
+                self.reference -= 1
+
+                if self.done:
+                    self.done = False
+
+        def choose_next_vertex(self):
+            result =  self.reference
+
+            self.reference += 1
+
+            return result
+
     @staticmethod
     def breadth_first_search(graph, source_vertex_id=1, target_vertex_id=11):
         bfs_tree = BreadthFirstSearchTree()

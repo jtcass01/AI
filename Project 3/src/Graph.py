@@ -61,11 +61,14 @@ class Route(object):
         plt.show()
 
     def walk_back(self):
-        twice_last_visited_vertex = self.get_vertex_by_id(self.vertex_order[-2])
-        last_visited_vertex = self.get_vertex_by_id(self.vertex_order[-1])
-        self.distance_traveled -= last_visited_vertex.compute_distance(twice_last_visited_vertex)
-        self.vertex_order.pop()
-        print("New route: ", str(self))
+        if len(self.vertex_order) > 2:
+            twice_last_visited_vertex = self.get_vertex_by_id(self.vertex_order[-2])
+            last_visited_vertex = self.get_vertex_by_id(self.vertex_order[-1])
+            self.distance_traveled -= last_visited_vertex.compute_distance(twice_last_visited_vertex)
+            self.vertex_order.pop()
+        else:
+            self.distance_traveled = 0
+            self.vertex_order.pop()
 
     def goto(self, vertex_id):
         destination_vertex = self.get_vertex_by_id(vertex_id)
