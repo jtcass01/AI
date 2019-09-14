@@ -90,7 +90,6 @@ class TravelingSalesmanGUI(QMainWindow):
         while not self.algorithm.done:
             self.algorithm.step_forward()
             self.problem_display.plot()
-            time.sleep(1)
 
     @pyqtSlot()
     def finish_simulation(self):
@@ -137,18 +136,14 @@ class PlotCanvas(FigureCanvas):
         plots = list([])
         arrow_plots = list([])
         arrow_labels = list([])
-        route_order = self.parent.algorithm.route.vertex_order
         graph_vertices = self.parent.algorithm.route.graph.vertices
 
-        visited_vertices = [vertex for vertex in graph_vertices if vertex.vertex_id in route_order]
-        unvisited_vertices = [vertex for vertex in graph_vertices if vertex not in visited_vertices]
-
         # Iterate over vertices, retrieving x and y coordinates
-        for vertex in visited_vertices:
+        for vertex in self.parent.algorithm.route.get_visited_vertices():
             visited_vertex_x.append(vertex.x)
             visited_vertex_y.append(vertex.y)
 
-        for vertex in unvisited_vertices:
+        for vertex in self.parent.algorithm.route.get_unvisited_vertices():
             unvisited_vertex_x.append(vertex.x)
             unvisited_vertex_y.append(vertex.y)
 
@@ -162,19 +157,20 @@ class PlotCanvas(FigureCanvas):
         plots.append(unvisited_vertex_plot)
 
         # Plot the edges
-        for vertex_index in range(len(route_order)-1):
-            arrow_label = "Edge {}->{}".format(route_order[vertex_index], route_order[vertex_index+1])
-            arrow_plot = ax.arrow(graph_vertices[route_order[vertex_index]-1].x,
-                                   graph_vertices[route_order[vertex_index]-1].y,
-                                   graph_vertices[route_order[vertex_index+1]-1].x - graph_vertices[route_order[vertex_index]-1].x,
-                                   graph_vertices[route_order[vertex_index+1]-1].y - graph_vertices[route_order[vertex_index]-1].y,
-                                   head_width=1, head_length=1,
-                                   color='#{}{}{}'.format(Graph.color_quantization(graph_vertices[route_order[vertex_index]-1].vertex_id, len(graph_vertices)),
-                                                          Graph.color_quantization(graph_vertices[route_order[vertex_index]-1].vertex_id % graph_vertices[route_order[vertex_index+1]-1].vertex_id, len(graph_vertices)),
-                                                          Graph.color_quantization(graph_vertices[route_order[vertex_index+1]-1].vertex_id, len(graph_vertices))),
-                                   label=arrow_label)
-            arrow_labels.append(arrow_label)
-            arrow_plots.append(arrow_plot)
+        if self.parent.algorithm.route.edges is not None:
+            for edge in self.parent.algorithm.route.edges:
+                vertex = edge.vertices[0]
+                adjacent_vertex = edge.vertices[1]
+
+                arrow_label = "Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)
+                arrow_plot = ax.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
+                                       head_width=1, head_length=1,
+                                       color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(graph_vertices)),
+                                                              Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(graph_vertices)),
+                                                              Graph.color_quantization(adjacent_vertex.vertex_id, len(graph_vertices))),
+                                       label=arrow_label)
+                arrow_labels.append(arrow_label)
+                arrow_plots.append(arrow_plot)
 
         # Show the graph with a legend
         ax.set_title('Program State')
@@ -231,7 +227,7 @@ if __name__ == '__main__':
     # Retrieve command line arguments
     if len(sys.argv) != 3 and len(sys.argv) != 2:
         print("Command Line Arguments should follow the format:")
-        print("python TrainingSalesman.py [relative path to vertex_graph_file] [optional: relative path to adjacency_matrix_file]")
+        print("python Display.py [relative path to vertex_graph_file] [optional: relative path to adjacency_matrix_file]")
     else:
         # retrieve relative path to vertex_graph_file
         vertex_graph_file_path = sys.argv[1]
@@ -253,7 +249,9 @@ if __name__ == '__main__':
         # Calculate edges
         graph.build_graph()
 
+        print(graph)
+
         # Start the GUI
         app = QApplication(sys.argv)
-        ex = TravelingSalesmanGUI(TravelingSalesman.GreedyAlgorithm(Route([], graph)))
+        ex = TravelingSalesmanGUI(TravelingSalesman.GreedyAlgorithm(graph))
         sys.exit(app.exec_())

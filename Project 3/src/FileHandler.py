@@ -36,18 +36,18 @@ class FileHandler():
         finally:
             vertex_file.close()
 
-        print(adjacency_matrix)
-        print(vertices)
-
         if adjacency_matrix is None:
             # Create a list of adjacent vertices for all vertices in the list
             for index, vertex in enumerate(vertices):
-                vertex.adjacent_vertices = [adjacent_vertex for adjacent_vertex in vertices if adjacent_vertex != vertex]
+                vertex.adjacent_vertices = np.array([adjacent_vertex for adjacent_vertex in vertices if adjacent_vertex != vertex])
         else:
             for row_index, row in adjacency_matrix.iterrows():
                 for column_index, relation in row.items():
                     if relation == 1:
-                        vertices[row_index].adjacent_vertices.append(vertices[int(column_index)-1])
+                        if vertices[row_index].adjacent_vertices is None:
+                            vertices[row_index].adjacent_vertices = np.array([vertices[int(column_index)-1]])
+                        else:
+                            vertices[row_index].adjacent_vertices = np.append(vertices[row_index].adjacent_vertices, [vertices[int(column_index)-1]])
 
         # Return the list of Vertex objects
         return vertices

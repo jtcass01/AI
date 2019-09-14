@@ -4,37 +4,63 @@ import os
 import time
 from copy import deepcopy
 from FileHandler import FileHandler
-from Graph import Route, Graph, BreadthFirstSearchTree, DepthFirstSearchStack
+from Graph import Route, Graph, Edge
+from Search import BreadthFirstSearchTree, DepthFirstSearchStack
 import numpy as np
 
 class TravelingSalesman():
     class GreedyAlgorithm(object):
-        def __init__(self, route):
-            self.route = route
-            self.reference = 1
+        def __init__(self, graph, starting_vertex_id=1):
+            self.route = Route(graph)
+            self.route.goto(self.route.graph.get_vertex_by_id(starting_vertex_id))
             self.done = False
+            self.attempted_starting_vertex_ids = list([starting_vertex_id])
+            self.remaining_starting_vertex_ids = self.get_remaining_starting_vertex_ids()
 
         def step_forward(self):
-            self.route.goto(self.choose_next_vertex())
+            next_vertex = self.choose_next_vertex()
+            last_vertex = self.route.vertices[-1]
+            new_edge = Edge(last_vertex, next_vertex)
 
-            if len(self.route.vertex_order) == len(self.route.graph.vertices):
+            if self.route.edge_passes_over_route(new_edge):
+                print("Edge passes over current route.  Choosing new starting vertex.")
+                new_starting_vertex_id = self.remaining_starting_vertex_ids[0]
+                self.route.reset_route()
+                self.route.goto(self.route.graph.get_vertex_by_id(new_starting_vertex_id))
+                self.attempted_starting_vertex_ids.append(new_starting_vertex_id)
+                self.remaining_starting_vertex_ids = self.get_remaining_starting_vertex_ids()
+            else:
+                self.route.goto(next_vertex)
+
+            if len(self.route.vertices) == len(self.route.graph.vertices):
                 self.done = True
 
         def step_backward(self):
-            if len(self.route.vertex_order) > 0:
+            if len(self.route.vertices) > 0:
                 self.route.walk_back()
-
-                self.reference -= 1
 
                 if self.done:
                     self.done = False
 
         def choose_next_vertex(self):
-            result =  self.reference
+            closest_vertex = None
+            closest_vertex_distance = None
 
-            self.reference += 1
+            for vertex in self.route.get_unvisited_vertices():
+                vertex_distance = self.route.get_shortest_distance_to_route(vertex)
 
-            return result
+                if closest_vertex is None:
+                    closest_vertex = vertex
+                    closest_vertex_distance = vertex_distance
+                else:
+                    if vertex_distance < closest_vertex_distance:
+                        closest_vertex_distance = vertex_distance
+                        closest_vertex = vertex
+
+            return closest_vertex
+
+        def get_remaining_starting_vertex_ids(self):
+            return [vertex_id for vertex_id in list(range(1, len(self.route.graph.vertices)+1)) if vertex_id not in self.attempted_starting_vertex_ids]
 
     @staticmethod
     def breadth_first_search(graph, source_vertex_id=1, target_vertex_id=11):
