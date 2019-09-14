@@ -70,7 +70,19 @@ class Math():
         CCW = enum.auto()
         CW = enum.auto()
 
+    @staticmethod
+    def color_quantization(value, number_of_bins):
+        assert 1 <= value <= number_of_bins, "Invalid vertex_id for color_quantization ({}) for color look_up.  " \
+                                     "Please update date to fit new range.".format(vertex_id)
 
+        size_of_bins = (256 - 0 + 1) / number_of_bins
+
+        color_value = hex(int(size_of_bins) * value)[2:]
+
+        if int(color_value, 16) < 10:
+            return "0" + color_value
+        else:
+            return color_value
 
 if __name__ == "__main__":
     line_point_1 = (-1, 1)
