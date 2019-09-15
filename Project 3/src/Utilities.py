@@ -9,49 +9,10 @@ class Math():
         x2, y2 = line_point_2
         x0, y0 = point
 
-
-
         if (x0 < min(x1, x2) or x0 > max(x1,x2)) and (y0 < min(y1, y2) or y0 > max(y1, y2)):
             return min([Math.calculate_distance_from_point_to_point(line_point_1, point), Math.calculate_distance_from_point_to_point(line_point_2, point)])
         else:
             return abs((x2-x1)*(y1-y0) - (x1-x0)*(y2-y1)) / (((y2-y1)**2 + (x2-x1)**2)**0.5)
-
-#        vector_ab = (x2-x1, y2-y1)
-#        vector_ac = (x0-x1, y0-y1)
-#        vector_ab_ac = (vector_ab[0]*vector_ac[0], vector_ab[1]*vector_ac[1])
-#        area = (vector_ab_ac[0]**2 + vector_ab_ac[1]**2)**0.5
-#
-#        return area / (vector_ab[0]**2 + vector_ab[1]**2)**0.5
-
-#        p1 = np.array(line_point_1)
-#        p2 = np.array(line_point_2)
-#        p0 = np.array(point)
-
-#        print("p1", p1)
-#        print("p2", p2)
-#        print("p0", p0)
-
-#        v = p2 - p1
-#        w = p0 - p1
-
-#        c1 = w.dot(v)
-#        if c1 <= 0:
-            # P0 is before P1
-#            return Math.calculate_distance_from_point_to_point(p0, p1)
-#        c2 = v.dot(v)
-#        if c2 <= c1:
-#            return Math.calculate_distance_from_point_to_point(p0, p2)
-#        b = c1 / c2
-#        Pb = p0 + v * b
-#        return Math.calculate_distance_from_point_to_point(p0, Pb)
-
-
-#        vector_ab = (x2-x1, y2-y1)
-#        vector_ac = (x0-x1, y0-y1)
-
-#        if ( (ab_) )
-
-#        return ()
 
     @staticmethod
     def calculate_distance_from_point_to_point(point1, point2):

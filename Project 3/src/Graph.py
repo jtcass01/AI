@@ -210,8 +210,6 @@ class Route(object):
             for edge in self.edges:
                 distance_to_edge = edge.compute_distance_to_vertex(vertex)
 
-                print(str(edge), distance_to_edge)
-
                 if closest_vertex_distance is None:
                     closest_vertex_distance = distance_to_edge
                 else:

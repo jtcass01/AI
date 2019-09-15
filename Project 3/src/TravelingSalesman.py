@@ -86,12 +86,8 @@ class TravelingSalesman():
             closest_vertex = None
             closest_vertex_distance = None
 
-            print("Choosing next vertex...")
-
             for vertex in self.route.get_unvisited_vertices():
                 vertex_distance = self.route.get_shortest_distance_to_route(vertex)
-
-                print(str(vertex), vertex_distance)
 
                 if closest_vertex is None:
                     closest_vertex = vertex
