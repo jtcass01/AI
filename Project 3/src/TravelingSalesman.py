@@ -86,8 +86,12 @@ class TravelingSalesman():
             closest_vertex = None
             closest_vertex_distance = None
 
+            print("Choosing next vertex...")
+
             for vertex in self.route.get_unvisited_vertices():
                 vertex_distance = self.route.get_shortest_distance_to_route(vertex)
+
+                print(str(vertex), vertex_distance)
 
                 if closest_vertex is None:
                     closest_vertex = vertex
@@ -254,17 +258,12 @@ def try_all_starting_vertex_ids_with_algorithm(graph, algorithm):
     best_algorithm = None
 
     for vertex in graph.vertices:
-        print("Starting algorithm run from vertex", str(vertex))
-
         temp_graph = deepcopy(graph)
 
         algorithm_run = algorithm(temp_graph, starting_vertex_id=vertex.vertex_id)
 
         while not algorithm_run.done:
-            print("algorithm_run step forward")
             algorithm_run.step_forward()
-
-        print(algorithm_run)
 
         if best_algorithm is None:
             best_algorithm = algorithm_run

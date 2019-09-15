@@ -36,12 +36,11 @@ class Vertex(object):
         return [adjacent_vertex for adjacent_vertex in self.adjacent_vertices if adjacent_vertex.visited is False]
 
     def get_location(self):
-        return (self.x, self.y)
+        return np.array((self.x, self.y))
 
 
 class Edge(object):
     def __init__(self, vertex1, vertex2):
-        print("New edge between vertices", str(vertex1), str(vertex2))
         self.vertices = np.array([vertex1, vertex2])
         self.distance = Edge.compute_edge_length(vertex1, vertex2)
 
@@ -52,7 +51,7 @@ class Edge(object):
         return Math.calculate_distance_from_line_to_point(self.get_points(), vertex.get_location())
 
     def get_points(self):
-        return (self.vertices[0].get_location(), self.vertices[1].get_location())
+        return np.array((self.vertices[0].get_location(), self.vertices[1].get_location()))
 
     @staticmethod
     def compute_edge_length(vertex1, vertex2):
@@ -138,17 +137,25 @@ class Route(object):
             adjacent_vertex = edge.vertices[1]
 
             arrow_label = "Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)
-            arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
-                                   head_width=1, head_length=1,
-                                   color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
-                                                          Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id, len(self.vertices)),
-                                                          Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
-                                   label=arrow_label)
+            if len(self.vertices) > 31:
+                arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
+                                       head_width=1, head_length=1,
+                                       color='#000000'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
+                                                              Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.vertices)),
+                                                              Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
+                                       label=arrow_label)
+            else:
+                arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
+                                       head_width=1, head_length=1,
+                                       color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
+                                                              Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.vertices)),
+                                                              Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
+                                       label=arrow_label)
             arrow_labels.append(arrow_label)
             arrow_plots.append(arrow_plot)
 
         # Show the graph with a legend
-        plt.legend(loc=2, fontsize='small')
+        plt.legend(arrow_plots, arrow_labels, loc=2, fontsize='small')
         plt.show()
 
     def walk_back(self):
@@ -202,6 +209,8 @@ class Route(object):
         if self.edges is not None:
             for edge in self.edges:
                 distance_to_edge = edge.compute_distance_to_vertex(vertex)
+
+                print(str(edge), distance_to_edge)
 
                 if closest_vertex_distance is None:
                     closest_vertex_distance = distance_to_edge
@@ -288,12 +297,20 @@ class Graph(object):
         for vertex in self.vertices:
             for adjacent_vertex in vertex.adjacent_vertices:
                 arrow_label = "Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)
-                arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
-                                       head_width=1, head_length=1,
-                                       color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
-                                                              str(hex(int(random.uniform(0.2, 1)*256)))[2:],
-                                                              Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
-                                       label=arrow_label)
+                if len(self.vertices) > 30:
+                    arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
+                                           head_width=1, head_length=1,
+                                           color='#000000'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
+                                                                  str(hex(int(random.uniform(0.2, 1)*256)))[2:],
+                                                                  Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
+                                           label=arrow_label)
+                else:
+                    arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
+                                           head_width=1, head_length=1,
+                                           color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
+                                                                  str(hex(int(random.uniform(0.2, 1)*256)))[2:],
+                                                                  Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
+                                           label=arrow_label)
 
                 plots.append(arrow_plot)
                 arrow_plots.append(arrow_plot)
@@ -322,15 +339,26 @@ class Graph(object):
         # Plot the route
         for vertex_index in range(len(route_order)-1):
             arrow_label = "Edge {}->{}".format(route_order[vertex_index], route_order[vertex_index+1])
-            arrow_plot = plt.arrow(self.vertices[route_order[vertex_index]-1].x,
-                                   self.vertices[route_order[vertex_index]-1].y,
-                                   self.vertices[route_order[vertex_index+1]-1].x - self.vertices[route_order[vertex_index]-1].x,
-                                   self.vertices[route_order[vertex_index+1]-1].y - self.vertices[route_order[vertex_index]-1].y,
-                                   head_width=1, head_length=1,
-                                   color='#{}{}{}'.format(Graph.color_quantization( self.vertices[route_order[vertex_index]-1].vertex_id, len(self.vertices)),
-                                                          str(hex(int(random.uniform(0.2, 1)*256)))[2:],
-                                                          Graph.color_quantization(self.vertices[route_order[vertex_index+1]-1].vertex_id, len(self.vertices))),
-                                   label=arrow_label)
+            if len(route_order) > 30:
+                arrow_plot = plt.arrow(self.vertices[route_order[vertex_index]-1].x,
+                                       self.vertices[route_order[vertex_index]-1].y,
+                                       self.vertices[route_order[vertex_index+1]-1].x - self.vertices[route_order[vertex_index]-1].x,
+                                       self.vertices[route_order[vertex_index+1]-1].y - self.vertices[route_order[vertex_index]-1].y,
+                                       head_width=1, head_length=1,
+                                       color='#000000'.format(Graph.color_quantization( self.vertices[route_order[vertex_index]-1].vertex_id, len(self.vertices)),
+                                                              str(hex(int(random.uniform(0.2, 1)*256)))[2:],
+                                                              Graph.color_quantization(self.vertices[route_order[vertex_index+1]-1].vertex_id, len(self.vertices))),
+                                       label=arrow_label)
+            else:
+                arrow_plot = plt.arrow(self.vertices[route_order[vertex_index]-1].x,
+                                       self.vertices[route_order[vertex_index]-1].y,
+                                       self.vertices[route_order[vertex_index+1]-1].x - self.vertices[route_order[vertex_index]-1].x,
+                                       self.vertices[route_order[vertex_index+1]-1].y - self.vertices[route_order[vertex_index]-1].y,
+                                       head_width=1, head_length=1,
+                                       color='#{}{}{}'.format(Graph.color_quantization( self.vertices[route_order[vertex_index]-1].vertex_id, len(self.vertices)),
+                                                              str(hex(int(random.uniform(0.2, 1)*256)))[2:],
+                                                              Graph.color_quantization(self.vertices[route_order[vertex_index+1]-1].vertex_id, len(self.vertices))),
+                                       label=arrow_label)
             arrow_labels.append(arrow_label)
             arrow_plots.append(arrow_plot)
 
