@@ -7,12 +7,23 @@ class Math():
         x1, y1 = line_point_1
         x2, y2 = line_point_2
         x0, y0 = point
+
         return abs((x2-x1)*(y1-y0) - (x1-x0)*(y2-y1)) / ((x2-x1)**2 + (y2-y1)**2)**0.5
+
+    @staticmethod
+    def calculate_distance_from_point_to_point(point1, point2):
+        x1, y1 = point1
+        x2, y2 = point2
+
+        return ((x1 - x2)**2 + (y1 - y2)**2)**0.5
 
     @staticmethod
     def lines_intersect(line1, line2):
         line1_point1, line1_point2 = line1
         line2_point1, line2_point2 = line2
+
+        if line1_point1 == line2_point1 or line1_point1 == line2_point2 or line1_point2 == line2_point1 or line1_point2 == line2_point2:
+            return False
 
         d1 = Math.get_line_point_direction(line1, line2_point1)
         d2 = Math.get_line_point_direction(line1, line2_point2)

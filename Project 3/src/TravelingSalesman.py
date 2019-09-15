@@ -10,34 +10,74 @@ import numpy as np
 
 class TravelingSalesman():
     class GreedyAlgorithm(object):
-        def __init__(self, graph, starting_vertex_id=1):
+        def __init__(self, graph, starting_vertex_id=1, reset_heuristic = False):
             self.route = Route(graph)
+            self.starting_vertex_id = starting_vertex_id
             self.route.goto(self.route.graph.get_vertex_by_id(starting_vertex_id))
             self.done = False
             self.attempted_starting_vertex_ids = list([starting_vertex_id])
             self.remaining_starting_vertex_ids = self.get_remaining_starting_vertex_ids()
+            self.reset_heuristic = reset_heuristic
+            self.crosses = 0
+
+        def __eq__(self, other):
+            return self.route.distance_traveled == other.route.distance_traveled
+
+        def __lt__(self, other):
+            return self.route.distance_traveled < other.route.distance_traveled
+
+        def __le__(self, other):
+            return self.route.distance_traveled <= other.route.distance_traveled
+
+        def __gt__(self, other):
+            return self.route.distance_traveled > other.route.distance_traveled
+
+        def __ge__(self, other):
+            return self.route.distance_traveled >= other.route.distance_traveled
+
+        def __str__(self):
+            string = "Starting vertex id: " + str(self.starting_vertex_id) + "\n"
+
+            string += "Route: " + str(self.route) + "\n"
+
+            string += "reset_heuristic: " + str(self.reset_heuristic) + "\n"
+
+            string += "Crosses: " + str(self.crosses)
+
+            return string
 
         def step_forward(self):
             next_vertex = self.choose_next_vertex()
-            last_vertex = self.route.vertices[-1]
-            new_edge = Edge(last_vertex, next_vertex)
 
-            if self.route.edge_passes_over_route(new_edge):
-                print("Edge passes over current route.  Choosing new starting vertex.")
-                new_starting_vertex_id = self.remaining_starting_vertex_ids[0]
-                self.route.reset_route()
-                self.route.goto(self.route.graph.get_vertex_by_id(new_starting_vertex_id))
-                self.attempted_starting_vertex_ids.append(new_starting_vertex_id)
-                self.remaining_starting_vertex_ids = self.get_remaining_starting_vertex_ids()
+            if self.route.vertices is None:
+                self.route.goto(self.route.vertices[0])
             else:
-                self.route.goto(next_vertex)
+                last_vertex = self.route.vertices[-1]
+                new_edge = Edge(last_vertex, next_vertex)
 
-            if len(self.route.vertices) == len(self.route.graph.vertices):
+                if self.reset_heuristic:
+                    if self.route.edge_passes_over_route(new_edge):
+                        new_starting_vertex_id = self.remaining_starting_vertex_ids[0]
+                        self.route.reset_route()
+                        self.route.goto(self.route.graph.get_vertex_by_id(new_starting_vertex_id))
+                        self.attempted_starting_vertex_ids.append(new_starting_vertex_id)
+                        self.remaining_starting_vertex_ids = self.get_remaining_starting_vertex_ids()
+                    else:
+                        self.route.goto(next_vertex)
+                else:
+                    if self.route.edge_passes_over_route(new_edge):
+                        self.crosses += 1
+
+                    self.route.goto(next_vertex)
+
+            if len(self.route.vertices) > len(self.route.graph.vertices):
                 self.done = True
 
         def step_backward(self):
             if len(self.route.vertices) > 0:
                 self.route.walk_back()
+                self.attempted_starting_vertex_ids.pop()
+                self.remaining_starting_vertex_ids = self.get_remaining_starting_vertex_ids()
 
                 if self.done:
                     self.done = False
@@ -57,7 +97,10 @@ class TravelingSalesman():
                         closest_vertex_distance = vertex_distance
                         closest_vertex = vertex
 
-            return closest_vertex
+            if len(self.route.get_unvisited_vertices()) == 0:
+                return self.route.vertices[0]
+            else:
+                return closest_vertex
 
         def get_remaining_starting_vertex_ids(self):
             return [vertex_id for vertex_id in list(range(1, len(self.route.graph.vertices)+1)) if vertex_id not in self.attempted_starting_vertex_ids]
@@ -207,24 +250,51 @@ class TravelingSalesman():
             # Identify the route with minimum distance traveled
             return min(routes)
 
+def try_all_starting_vertex_ids_with_algorithm(graph, algorithm):
+    best_algorithm = None
+
+    for vertex in graph.vertices:
+        print("Starting algorithm run from vertex", str(vertex))
+
+        temp_graph = deepcopy(graph)
+
+        algorithm_run = algorithm(temp_graph, starting_vertex_id=vertex.vertex_id)
+
+        while not algorithm_run.done:
+            print("algorithm_run step forward")
+            algorithm_run.step_forward()
+
+        print(algorithm_run)
+
+        if best_algorithm is None:
+            best_algorithm = algorithm_run
+        else:
+            if best_algorithm > algorithm_run:
+                best_algorithm = algorithm_run
+
+    print("Best Algorithm: ", str(best_algorithm))
+    return best_algorithm.route
 
 if __name__ == "__main__":
     # Retrieve command line arguments
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 4 and len(sys.argv) != 3:
         print("Command Line Arguments should follow the format:")
         print("python TrainingSalesman.py [algorithm] [relative path to vertex_graph_file]"
               " [relative path to adjacency_matrix_file]")
-        print("\nImplemented algorithms include: brute_force, bfs, dfs")
+        print("\nImplemented algorithms include: brute_force, bfs, dfs, greedy")
     else:
         # retrieve solve_method
         algorithm = sys.argv[1]
         # retrieve relative path to vertex_graph_file
         vertex_graph_file_path = sys.argv[2]
-        # retrieve relative path to adjacency_matrix_file_path
-        adjacency_matrix_file_path = sys.argv[3]
 
-        # Read the adjacency matrix
-        adjacency_matrix = FileHandler.read_adjacency_matrix(os.getcwd() + os.path.sep + adjacency_matrix_file_path)
+        adjacency_matrix = None
+        if len(sys.argv) == 4:
+            # retrieve relative path to adjacency_matrix_file_path
+            adjacency_matrix_file_path = sys.argv[3]
+
+            # Read the adjacency matrix
+            adjacency_matrix = FileHandler.read_adjacency_matrix(os.getcwd() + os.path.sep + adjacency_matrix_file_path)
 
         # Read the vertices from the vertex graph file.
         vertices = FileHandler.read_graph(os.getcwd() + os.path.sep + vertex_graph_file_path, adjacency_matrix)
@@ -273,7 +343,7 @@ if __name__ == "__main__":
             print("breadth_first_search solution", str(result))
             print("Time elaspsed: {}".format(end-start))
 
-            graph.plot_route(result.vertex_order)
+            graph.plot_route(result)
 
         elif algorithm == "dfs" or algorithm == "DFS":
             start = time.time()
@@ -284,6 +354,16 @@ if __name__ == "__main__":
             print("depth_first_search solution", str(result))
             print("Time elaspsed: {}".format(end-start))
 
-            graph.plot_route(result.vertex_order)
+            graph.plot_route(result)
+        elif algorithm == "greedy":
+            start = time.time()
+
+            result = try_all_starting_vertex_ids_with_algorithm(graph, TravelingSalesman.GreedyAlgorithm)
+
+            end = time.time()
+            print("greedy solution", str(result))
+            print("Time elaspsed: {}".format(end-start))
+
+            result.plot()
         else:
             print("Invalid solve_method.  Current implemented solve methods include: brute_force")

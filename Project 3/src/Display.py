@@ -75,15 +75,28 @@ class TravelingSalesmanGUI(QMainWindow):
     @pyqtSlot()
     def step_forward(self):
         if not self.algorithm.done:
+            if len(self.algorithm.route.vertices) == 0:
+                self.step_backward_button.setDisabled(False)
+
             self.algorithm.step_forward()
 
             self.problem_display.plot()
 
+            if self.algorithm.done:
+                self.step_forward_button.setDisabled(True)
+
+
     @pyqtSlot()
     def step_backward(self):
+        if self.algorithm.done:
+            self.step_forward_button.setDisabled(False)
+
         self.algorithm.step_backward()
 
         self.problem_display.plot()
+
+        if len(self.algorithm.route.vertices) == 0:
+            self.step_backward_button.setDisabled(True)
 
     @pyqtSlot()
     def run_simulation(self):
@@ -253,5 +266,5 @@ if __name__ == '__main__':
 
         # Start the GUI
         app = QApplication(sys.argv)
-        ex = TravelingSalesmanGUI(TravelingSalesman.GreedyAlgorithm(graph))
+        ex = TravelingSalesmanGUI(TravelingSalesman.GreedyAlgorithm(graph, 2))
         sys.exit(app.exec_())

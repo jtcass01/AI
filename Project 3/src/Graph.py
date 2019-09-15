@@ -41,6 +41,7 @@ class Vertex(object):
 
 class Edge(object):
     def __init__(self, vertex1, vertex2):
+        print("New edge between vertices", str(vertex1), str(vertex2))
         self.vertices = np.array([vertex1, vertex2])
         self.distance = Edge.compute_edge_length(vertex1, vertex2)
 
@@ -81,7 +82,23 @@ class Route(object):
         return self.distance_traveled >= other.distance_traveled
 
     def __str__(self):
-        return str(self.vertex_order) + "|" + str(self.distance_traveled)
+        string = ""
+
+        if self.vertices is not None:
+            string += "==== Vertices ====\n"
+
+            for vertex in self.vertices:
+                string += str(vertex) + "\n"
+
+        if self.edges is not None:
+            string += "==== Edges ====\n"
+
+            for edge in self.edges:
+                string += str(edge) + "\n"
+
+        string += "Distance Traveled: " + str(self.distance_traveled)
+
+        return string
 
     def reset_route(self):
         for vertex in self.graph.vertices:
@@ -124,7 +141,7 @@ class Route(object):
             arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
                                    head_width=1, head_length=1,
                                    color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
-                                                          Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id, len(graph_vertices)),
+                                                          Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id, len(self.vertices)),
                                                           Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
                                    label=arrow_label)
             arrow_labels.append(arrow_label)
@@ -155,8 +172,6 @@ class Route(object):
             pass
 
     def goto(self, vertex):
-        print("Goto:", vertex)
-
         # If no vertex has been visisted
         if self.vertices is None:
             # Initialize the distance traveled to 0
@@ -195,7 +210,9 @@ class Route(object):
                         closest_vertex_distance = distance_to_edge
         else:
             if self.vertices is not None:
-                closest_vertex_distance = min(vertex.distances[:vertex.vertex_id:])
+                closest_vertex_distance = Math.calculate_distance_from_point_to_point(self.vertices[-1].get_location(), vertex.get_location())
+            else:
+                return 0
 
         return closest_vertex_distance
 
@@ -241,6 +258,12 @@ class Graph(object):
             vertex1.distances = edge_distance_dictionary[vertex1.vertex_id]
 
         self.edge_distances = pd.DataFrame(edge_distance_dictionary)
+
+    def reset_graph(self):
+        for vertex in self.vertices:
+            vertex.visisted = False
+        self.edge_distances = None
+        self.edges = np.array([])
 
     def get_vertex_by_id(self, vertex_id):
         return [vertex for vertex in self.vertices if vertex.vertex_id == vertex_id][0]
