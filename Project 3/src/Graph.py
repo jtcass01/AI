@@ -44,8 +44,23 @@ class Edge(object):
         self.vertices = np.array([vertex1, vertex2])
         self.distance = Edge.compute_edge_length(vertex1, vertex2)
 
+    def __eq__(self, other):
+        return self.vertices[0] == other.vertices[0] and self.vertices[1] == other.vertices[1]
+
+    def __lt__(self, other):
+        return self.distance < other.distance
+
+    def __le__(self, other):
+        return self.distance <= other.distance
+
+    def __gt__(self, other):
+        return self.distance > other.distance
+
+    def __ge__(self, other):
+        return self.distance >= other.distance
+
     def __str__(self):
-        return str(self.vertices[0].vertex_id) + "->" + str(self.vertices[1].vertex_id) + " | distance: " + str(self.distance)
+        return "(" + str(self.vertices[0].vertex_id) + "->" + str(self.vertices[1].vertex_id) + ")"
 
     def compute_distance_to_vertex(self, vertex):
         return Math.calculate_distance_from_line_to_point(self.get_points(), vertex.get_location())
@@ -203,25 +218,92 @@ class Route(object):
                 self.edges = np.append(self.edges, [edge])
             return edge
 
+    def lasso(self, vertex, closest_item_to_next_vertex):
+        if isinstance(closest_item_to_next_vertex, Edge):
+            edge_vertex1 = closest_item_to_next_vertex.vertices[0]
+            edge_vertex2 = closest_item_to_next_vertex.vertices[1]
+            edge_vertex2_index = np.where(self.vertices == edge_vertex2)[0]
+
+            if edge_vertex2_index < len(self.vertices) - 1:
+                v3 = self.vertices[edge_vertex2_index+1][0]
+
+            v1_v2 = closest_item_to_next_vertex.distance
+
+            if edge_vertex2_index < len(self.vertices) - 2:
+                v1_v2_v0_v3 = v1_v2 + Math.calculate_distance_from_point_to_point(edge_vertex2.get_location(), vertex.get_location()) + Math.calculate_distance_from_point_to_point(vertex.get_location(), v3.get_location())
+                v1_v0_v2_v3 = Math.calculate_distance_from_point_to_point(edge_vertex1.get_location(), vertex.get_location()) + Math.calculate_distance_from_point_to_point(vertex.get_location(), edge_vertex2.get_location()) + Math.calculate_distance_from_point_to_point(edge_vertex2.get_location(), v3.get_location())
+            else:
+                v1_v2_v0_v3 = v1_v2 + Math.calculate_distance_from_point_to_point(edge_vertex2.get_location(), vertex.get_location())
+                v1_v0_v2_v3 = Math.calculate_distance_from_point_to_point(edge_vertex1.get_location(), vertex.get_location()) + Math.calculate_distance_from_point_to_point(vertex.get_location(), edge_vertex2.get_location())
+
+            if v1_v2_v0_v3 < v1_v0_v2_v3:
+                # Best to insert it after edge_vertex2 in vertices list
+                new_vertex_location = np.where(self.vertices == edge_vertex2)[0] + 1
+
+                self.vertices = np.insert(self.vertices, new_vertex_location, vertex)
+
+                edge_v1_v2 = [edge for edge in self.edges if edge == closest_item_to_next_vertex][0]
+                edge_v1_v2_index = np.where(self.edges == edge_v1_v2)[0]
+                new_edge_location = edge_v1_v2_index + 1
+
+                if new_vertex_location < len(self.vertices)-1:
+                    for edge in self.edges:
+                        if edge.vertices[0].vertex_id == edge_vertex2.vertex_id and edge.vertices[1].vertex_id == v3.vertex_id:
+                            edge_v2_v3 = edge
+                    self.edges = self.edges[self.edges != edge_v2_v3]
+                    edge_v0_v3 = Edge(vertex, v3)
+                    self.edges = np.insert(self.edges, new_edge_location, edge_v0_v3)
+                    self.distance_traveled += edge_v0_v3.distance
+
+                edge_v2_v0 = Edge(edge_vertex2, vertex)
+                self.edges = np.insert(self.edges, new_edge_location, edge_v2_v0)
+
+                self.distance_traveled += edge_v2_v0.distance
+            else:
+                edge_v1_v2 = [edge for edge in self.edges if edge == closest_item_to_next_vertex][0]
+                edge_v1_v2_index = np.where(self.edges == edge_v1_v2)[0]
+
+                # Best to insert it before edge_vertex2 in vertices list
+                new_vertex_location = np.where(self.vertices == edge_vertex2)[0]
+                self.vertices = np.insert(self.vertices, new_vertex_location, vertex)
+
+                edge_v1_v0 = Edge(edge_vertex1, vertex)
+                edge_v0_v2 = Edge(vertex, edge_vertex2)
+                self.edges = self.edges[self.edges != edge_v1_v2]
+                self.edges = np.insert(self.edges, edge_v1_v2_index, edge_v0_v2)
+                self.edges = np.insert(self.edges, edge_v1_v2_index, edge_v1_v0)
+
+                self.distance_traveled -= v1_v2
+                self.distance_traveled += edge_v1_v0.distance
+                self.distance_traveled += edge_v0_v2.distance
+        elif isinstance(closest_item_to_next_vertex, Vertex):
+            self.goto(vertex)
+
+        vertex.visited = True
+
     def get_shortest_distance_to_route(self, vertex):
-        closest_vertex_distance = None
+        closest_distance = None
+        closest_item = None
 
         if self.edges is not None:
             for edge in self.edges:
                 distance_to_edge = edge.compute_distance_to_vertex(vertex)
 
-                if closest_vertex_distance is None:
-                    closest_vertex_distance = distance_to_edge
+                if closest_distance is None:
+                    closest_distance = distance_to_edge
+                    closest_item = edge
                 else:
-                    if closest_vertex_distance > distance_to_edge:
-                        closest_vertex_distance = distance_to_edge
+                    if closest_distance > distance_to_edge:
+                        closest_distance = distance_to_edge
+                        closest_item = edge
         else:
             if self.vertices is not None:
-                closest_vertex_distance = Math.calculate_distance_from_point_to_point(self.vertices[-1].get_location(), vertex.get_location())
+                closest_distance = Math.calculate_distance_from_point_to_point(self.vertices[-1].get_location(), vertex.get_location())
+                closest_item = self.vertices[-1]
             else:
-                return 0
+                return 0, None, None
 
-        return closest_vertex_distance
+        return closest_item, closest_distance
 
     def edge_passes_over_route(self, test_edge):
         if self.edges is None:
@@ -231,6 +313,14 @@ class Route(object):
                 if Math.lines_intersect(edge.get_points(), test_edge.get_points()):
                     return True
             return False
+
+    def recount_distance(self):
+        result = 0
+
+        for edge in self.edges:
+            result += edge.distance
+
+        return result
 
 class Graph(object):
     def __init__(self, vertices):

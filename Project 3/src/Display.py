@@ -32,7 +32,6 @@ class TravelingSalesmanGUI(QMainWindow):
 
         self.reference = 1
 
-
     def initUI(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
@@ -266,5 +265,5 @@ if __name__ == '__main__':
 
         # Start the GUI
         app = QApplication(sys.argv)
-        ex = TravelingSalesmanGUI(TravelingSalesman.GreedyAlgorithm(graph, 28))
+        ex = TravelingSalesmanGUI(TravelingSalesman.GreedyAlgorithm(graph, 8))
         sys.exit(app.exec_())

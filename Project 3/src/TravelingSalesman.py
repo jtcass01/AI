@@ -47,28 +47,8 @@ class TravelingSalesman():
             return string
 
         def step_forward(self):
-            next_vertex = self.choose_next_vertex()
-
-            if self.route.vertices is None:
-                self.route.goto(self.route.vertices[0])
-            else:
-                last_vertex = self.route.vertices[-1]
-                new_edge = Edge(last_vertex, next_vertex)
-
-                if self.reset_heuristic:
-                    if self.route.edge_passes_over_route(new_edge):
-                        new_starting_vertex_id = self.remaining_starting_vertex_ids[0]
-                        self.route.reset_route()
-                        self.route.goto(self.route.graph.get_vertex_by_id(new_starting_vertex_id))
-                        self.attempted_starting_vertex_ids.append(new_starting_vertex_id)
-                        self.remaining_starting_vertex_ids = self.get_remaining_starting_vertex_ids()
-                    else:
-                        self.route.goto(next_vertex)
-                else:
-                    if self.route.edge_passes_over_route(new_edge):
-                        self.crosses += 1
-
-                    self.route.goto(next_vertex)
+            next_vertex, closest_item_next_to_vertex = self.choose_next_vertex()
+            self.route.lasso(next_vertex, closest_item_next_to_vertex)
 
             if len(self.route.vertices) > len(self.route.graph.vertices):
                 self.done = True
@@ -83,24 +63,28 @@ class TravelingSalesman():
                     self.done = False
 
         def choose_next_vertex(self):
+            closest_item_next_to_closest_vertex = None
+            r_type_of_closest_item = None
             closest_vertex = None
-            closest_vertex_distance = None
+            closest_distance = None
 
             for vertex in self.route.get_unvisited_vertices():
-                vertex_distance = self.route.get_shortest_distance_to_route(vertex)
+                closest_item_next_to_vertex, item_distance = self.route.get_shortest_distance_to_route(vertex)
 
                 if closest_vertex is None:
                     closest_vertex = vertex
-                    closest_vertex_distance = vertex_distance
+                    closest_distance = item_distance
+                    closest_item_next_to_closest_vertex = closest_item_next_to_vertex
                 else:
-                    if vertex_distance < closest_vertex_distance:
-                        closest_vertex_distance = vertex_distance
+                    if item_distance < closest_distance:
+                        closest_distance = item_distance
                         closest_vertex = vertex
+                        closest_item_next_to_closest_vertex = closest_item_next_to_vertex
 
             if len(self.route.get_unvisited_vertices()) == 0:
-                return self.route.vertices[0]
+                return self.route.vertices[0], self.route.vertices[1]
             else:
-                return closest_vertex
+                return closest_vertex, closest_item_next_to_closest_vertex
 
         def get_remaining_starting_vertex_ids(self):
             return [vertex_id for vertex_id in list(range(1, len(self.route.graph.vertices)+1)) if vertex_id not in self.attempted_starting_vertex_ids]
@@ -356,7 +340,7 @@ if __name__ == "__main__":
             result = try_all_starting_vertex_ids_with_algorithm(graph, TravelingSalesman.GreedyAlgorithm)
 
             end = time.time()
-            print("greedy solution", str(result))
+            print("greedy solution", str(result), result.recount_distance())
             print("Time elaspsed: {}".format(end-start))
 
             result.plot()

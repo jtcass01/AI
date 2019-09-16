@@ -4,15 +4,77 @@ import numpy as np
 class Math():
     @staticmethod
     def calculate_distance_from_line_to_point(line, point):
-        line_point_1, line_point_2 = line
-        x1, y1 = line_point_1
-        x2, y2 = line_point_2
+        lp1, lp2 = line
+        x1, y1 = lp1
+        x2, y2 = lp2
         x0, y0 = point
 
-        if (x0 < min(x1, x2) or x0 > max(x1,x2)) and (y0 < min(y1, y2) or y0 > max(y1, y2)):
-            return min([Math.calculate_distance_from_point_to_point(line_point_1, point), Math.calculate_distance_from_point_to_point(line_point_2, point)])
+        lp1_to_p = Math.calculate_distance_from_point_to_point(lp1, point)
+        lp2_to_p = Math.calculate_distance_from_point_to_point(lp2, point)
+        a = x0 - x1
+        b = y0 - y1
+        c = x2 - x1
+        d = y2 - y1
+
+        dot = a*c + b * d
+        len_sq = c*c + d*d
+        param = -1
+
+        if len_sq != 0:
+            param = dot / len_sq
+
+        if param < 0:
+            xx = x1
+            yy = y1
+        elif param > 1:
+            xx = x2
+            yy = y2
         else:
-            return abs((x2-x1)*(y1-y0) - (x1-x0)*(y2-y1)) / (((y2-y1)**2 + (x2-x1)**2)**0.5)
+            xx = x1 + param*c
+            yy = y1 + param*d
+
+        dx = x0 - xx
+        dy = y0 - yy
+
+        result = (dx**2 + dy**2)**0.5
+
+        if (x0 < min(x1, x2) or x0 > max(x1,x2)) and (y0 < min(y1, y2) or y0 > max(y1, y2)):
+            lp1_to_p = Math.calculate_distance_from_point_to_point(lp1, point)
+            lp2_to_p = Math.calculate_distance_from_point_to_point(lp2, point)
+
+            if lp1_to_p < lp2_to_p:
+                return lp1_to_p
+            else:
+                return lp2_to_p
+        else:
+            a = x0 - x1
+            b = y0 - y1
+            c = x2 - x1
+            d = y2 - y1
+
+            dot = a*c + b * d
+            len_sq = c*c + d*d
+            param = -1
+
+            if len_sq != 0:
+                param = dot / len_sq
+
+            if param < 0:
+                xx = x1
+                yy = y1
+            elif param > 1:
+                xx = x2
+                yy = y2
+            else:
+                xx = x1 + param*c
+                yy = y1 + param*d
+
+            dx = x0 - xx
+            dy = y0 - yy
+
+            result = (dx**2 + dy**2)**0.5
+
+            return result
 
     @staticmethod
     def calculate_distance_from_point_to_point(point1, point2):
