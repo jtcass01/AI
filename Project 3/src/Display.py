@@ -265,5 +265,5 @@ if __name__ == '__main__':
 
         # Start the GUI
         app = QApplication(sys.argv)
-        ex = TravelingSalesmanGUI(TravelingSalesman.GreedyAlgorithm(graph, 8))
+        ex = TravelingSalesmanGUI(TravelingSalesman.GreedyAlgorithm(graph, 1))
         sys.exit(app.exec_())

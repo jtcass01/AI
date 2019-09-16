@@ -46,6 +46,12 @@ class TravelingSalesman():
 
             return string
 
+        def complete(self):
+            while not self.done:
+                self.step_forward()
+
+            return self.route
+
         def step_forward(self):
             next_vertex, closest_item_next_to_vertex = self.choose_next_vertex()
             self.route.lasso(next_vertex, closest_item_next_to_vertex)
@@ -256,10 +262,10 @@ def try_all_starting_vertex_ids_with_algorithm(graph, algorithm):
 
 if __name__ == "__main__":
     # Retrieve command line arguments
-    if len(sys.argv) != 4 and len(sys.argv) != 3:
+    if len(sys.argv) != 4 and len(sys.argv) != 3 and len(sys.argv) != 5:
         print("Command Line Arguments should follow the format:")
         print("python TrainingSalesman.py [algorithm] [relative path to vertex_graph_file]"
-              " [relative path to adjacency_matrix_file]")
+              " [relative path to adjacency_matrix_file or none] [optional: starting_vertex_id]")
         print("\nImplemented algorithms include: brute_force, bfs, dfs, greedy")
     else:
         # retrieve solve_method
@@ -272,11 +278,20 @@ if __name__ == "__main__":
             # retrieve relative path to adjacency_matrix_file_path
             adjacency_matrix_file_path = sys.argv[3]
 
-            # Read the adjacency matrix
-            adjacency_matrix = FileHandler.read_adjacency_matrix(os.getcwd() + os.path.sep + adjacency_matrix_file_path)
+            if adjacency_matrix_file_path == 'none' or adjacency_matrix_file_path == 'NONE':
+                pass
+            else:
+                # Read the adjacency matrix
+                adjacency_matrix = FileHandler.read_adjacency_matrix(os.getcwd() + os.path.sep + adjacency_matrix_file_path)
+
+        starting_vertex_id = 1
+        if len(sys.argv) == 5:
+            starting_vertex_id = int(sys.argv[4])
 
         # Read the vertices from the vertex graph file.
         vertices = FileHandler.read_graph(os.getcwd() + os.path.sep + vertex_graph_file_path, adjacency_matrix)
+
+        assert len(vertices) >= starting_vertex_id > 0, "Starting_vertex_id must be between 0 and # of vertices [{}] in vertex_graph_file_path".format(len(vertices))
 
         if len(vertices) > 9 and algorithm == 'brute_force':
             reduce_ram_usage = True
@@ -337,7 +352,7 @@ if __name__ == "__main__":
         elif algorithm == "greedy":
             start = time.time()
 
-            result = try_all_starting_vertex_ids_with_algorithm(graph, TravelingSalesman.GreedyAlgorithm)
+            result = TravelingSalesman.GreedyAlgorithm(graph, starting_vertex_id).complete()
 
             end = time.time()
             print("greedy solution", str(result), result.recount_distance())

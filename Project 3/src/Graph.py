@@ -155,7 +155,7 @@ class Route(object):
             if len(self.vertices) > 31:
                 arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
                                        head_width=1, head_length=1,
-                                       color='#000000'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
+                                       color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
                                                               Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.vertices)),
                                                               Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
                                        label=arrow_label)
@@ -388,7 +388,7 @@ class Graph(object):
                 if len(self.vertices) > 30:
                     arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
                                            head_width=1, head_length=1,
-                                           color='#000000'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
+                                           color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
                                                                   str(hex(int(random.uniform(0.2, 1)*256)))[2:],
                                                                   Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
                                            label=arrow_label)
@@ -433,7 +433,7 @@ class Graph(object):
                                        self.vertices[route_order[vertex_index+1]-1].x - self.vertices[route_order[vertex_index]-1].x,
                                        self.vertices[route_order[vertex_index+1]-1].y - self.vertices[route_order[vertex_index]-1].y,
                                        head_width=1, head_length=1,
-                                       color='#000000'.format(Graph.color_quantization( self.vertices[route_order[vertex_index]-1].vertex_id, len(self.vertices)),
+                                       color='#{}{}{}'.format(Graph.color_quantization( self.vertices[route_order[vertex_index]-1].vertex_id, len(self.vertices)),
                                                               str(hex(int(random.uniform(0.2, 1)*256)))[2:],
                                                               Graph.color_quantization(self.vertices[route_order[vertex_index+1]-1].vertex_id, len(self.vertices))),
                                        label=arrow_label)
@@ -472,7 +472,7 @@ class Graph(object):
 
         color_value = hex(int(size_of_bins) * vertex_id)[2:]
 
-        if int(color_value, 16) < 10:
+        if len(color_value) == 1:
             return "0" + color_value
         else:
             return color_value
