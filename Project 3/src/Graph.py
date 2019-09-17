@@ -251,6 +251,7 @@ class Route(object):
                         if edge.vertices[0].vertex_id == edge_vertex2.vertex_id and edge.vertices[1].vertex_id == v3.vertex_id:
                             edge_v2_v3 = edge
                     self.edges = self.edges[self.edges != edge_v2_v3]
+                    self.distance_traveled -= edge_v2_v3.distance
                     edge_v0_v3 = Edge(vertex, v3)
                     self.edges = np.insert(self.edges, new_edge_location, edge_v0_v3)
                     self.distance_traveled += edge_v0_v3.distance
