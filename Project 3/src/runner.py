@@ -15,4 +15,4 @@ def test_display(relative_display_path, relative_tsp_graph_path):
 
 if __name__ == "__main__":
 	test_display(os.path.sep + "Display.py",
-                ".." + os.path.sep + "docs" + os.path.sep + "Random40.tsp")
+                ".." + os.path.sep + "docs" + os.path.sep + "Random30.tsp")

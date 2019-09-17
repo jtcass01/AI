@@ -152,20 +152,12 @@ class Route(object):
             adjacent_vertex = edge.vertices[1]
 
             arrow_label = "Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)
-            if len(self.vertices) > 31:
-                arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
-                                       head_width=1, head_length=1,
-                                       color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
-                                                              Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.vertices)),
-                                                              Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
-                                       label=arrow_label)
-            else:
-                arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
-                                       head_width=1, head_length=1,
-                                       color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
-                                                              Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.vertices)),
-                                                              Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
-                                       label=arrow_label)
+            arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
+                                   head_width=1, head_length=1,
+                                   color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
+                                                          Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.vertices)),
+                                                          Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
+                                   label=arrow_label)
             arrow_labels.append(arrow_label)
             arrow_plots.append(arrow_plot)
 
@@ -220,32 +212,40 @@ class Route(object):
 
     def lasso(self, vertex, closest_item_to_next_vertex):
         if isinstance(closest_item_to_next_vertex, Edge):
+            # Get v1, v2
             edge_vertex1 = closest_item_to_next_vertex.vertices[0]
             edge_vertex2 = closest_item_to_next_vertex.vertices[1]
-            edge_vertex2_index = np.where(self.vertices == edge_vertex2)[0]
 
+            # use v2's index to get v3
+            edge_vertex2_index = np.where(self.vertices == edge_vertex2)[0]
             if edge_vertex2_index < len(self.vertices) - 1:
                 v3 = self.vertices[edge_vertex2_index+1][0]
 
+            # Calculate different edge distances.
             v1_v2 = closest_item_to_next_vertex.distance
-
             if edge_vertex2_index < len(self.vertices) - 2:
-                v1_v2_v0_v3 = v1_v2 + Math.calculate_distance_from_point_to_point(edge_vertex2.get_location(), vertex.get_location()) + Math.calculate_distance_from_point_to_point(vertex.get_location(), v3.get_location())
-                v1_v0_v2_v3 = Math.calculate_distance_from_point_to_point(edge_vertex1.get_location(), vertex.get_location()) + Math.calculate_distance_from_point_to_point(vertex.get_location(), edge_vertex2.get_location()) + Math.calculate_distance_from_point_to_point(edge_vertex2.get_location(), v3.get_location())
+                v1_v2_v0_v3 = v1_v2 + Math.calculate_distance_from_point_to_point(edge_vertex2.get_location(), vertex.get_location()) + \
+                                                                                  Math.calculate_distance_from_point_to_point(vertex.get_location(), v3.get_location())
+                v1_v0_v2_v3 = Math.calculate_distance_from_point_to_point(edge_vertex1.get_location(), vertex.get_location()) + \
+                                                                          Math.calculate_distance_from_point_to_point(vertex.get_location(), edge_vertex2.get_location()) + \
+                                                                          Math.calculate_distance_from_point_to_point(edge_vertex2.get_location(), v3.get_location())
             else:
                 v1_v2_v0_v3 = v1_v2 + Math.calculate_distance_from_point_to_point(edge_vertex2.get_location(), vertex.get_location())
-                v1_v0_v2_v3 = Math.calculate_distance_from_point_to_point(edge_vertex1.get_location(), vertex.get_location()) + Math.calculate_distance_from_point_to_point(vertex.get_location(), edge_vertex2.get_location())
+                v1_v0_v2_v3 = Math.calculate_distance_from_point_to_point(edge_vertex1.get_location(), vertex.get_location()) + \
+                                                                          Math.calculate_distance_from_point_to_point(vertex.get_location(), edge_vertex2.get_location())
 
-            if v1_v2_v0_v3 < v1_v0_v2_v3:
-                # Best to insert it after edge_vertex2 in vertices list
+            # Choose the shortest configuration
+            if v1_v2_v0_v3 < v1_v0_v2_v3: # Best to insert it after edge_vertex2 in vertices list
+                # Calculate new vertex location in list and insert it
                 new_vertex_location = np.where(self.vertices == edge_vertex2)[0] + 1
-
                 self.vertices = np.insert(self.vertices, new_vertex_location, vertex)
 
+                # calculate the new edge's location
                 edge_v1_v2 = [edge for edge in self.edges if edge == closest_item_to_next_vertex][0]
                 edge_v1_v2_index = np.where(self.edges == edge_v1_v2)[0]
                 new_edge_location = edge_v1_v2_index + 1
 
+                # create edge v0_v3 and insert it.  Remove edge v2_v3
                 if new_vertex_location < len(self.vertices)-1:
                     for edge in self.edges:
                         if edge.vertices[0].vertex_id == edge_vertex2.vertex_id and edge.vertices[1].vertex_id == v3.vertex_id:
@@ -255,30 +255,36 @@ class Route(object):
                     self.edges = np.insert(self.edges, new_edge_location, edge_v0_v3)
                     self.distance_traveled += edge_v0_v3.distance
 
+                # create edge v2_v0 and insert it
                 edge_v2_v0 = Edge(edge_vertex2, vertex)
                 self.edges = np.insert(self.edges, new_edge_location, edge_v2_v0)
-
                 self.distance_traveled += edge_v2_v0.distance
-            else:
-                edge_v1_v2 = [edge for edge in self.edges if edge == closest_item_to_next_vertex][0]
-                edge_v1_v2_index = np.where(self.edges == edge_v1_v2)[0]
-
-                # Best to insert it before edge_vertex2 in vertices list
+            else: # Best to insert it before edge_vertex2 in vertices list
+                # Calculate new vertex location in list and insert it
                 new_vertex_location = np.where(self.vertices == edge_vertex2)[0]
                 self.vertices = np.insert(self.vertices, new_vertex_location, vertex)
 
+                # Calculate v1_V2 edge index for reference
+                edge_v1_v2 = [edge for edge in self.edges if edge == closest_item_to_next_vertex][0]
+                edge_v1_v2_index = np.where(self.edges == edge_v1_v2)[0]
+
+                # create edges and insert them
                 edge_v1_v0 = Edge(edge_vertex1, vertex)
                 edge_v0_v2 = Edge(vertex, edge_vertex2)
-                self.edges = self.edges[self.edges != edge_v1_v2]
                 self.edges = np.insert(self.edges, edge_v1_v2_index, edge_v0_v2)
                 self.edges = np.insert(self.edges, edge_v1_v2_index, edge_v1_v0)
 
-                self.distance_traveled -= v1_v2
+                # Remove unnecessary edge
+                self.edges = self.edges[self.edges != edge_v1_v2]
+
+                # Update distance
+                self.distance_traveled -= edge_v1_v2.distance
                 self.distance_traveled += edge_v1_v0.distance
                 self.distance_traveled += edge_v0_v2.distance
         elif isinstance(closest_item_to_next_vertex, Vertex):
             self.goto(vertex)
 
+        # Set vertex to be true.
         vertex.visited = True
 
     def get_shortest_distance_to_route(self, vertex):
@@ -385,21 +391,12 @@ class Graph(object):
         for vertex in self.vertices:
             for adjacent_vertex in vertex.adjacent_vertices:
                 arrow_label = "Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)
-                if len(self.vertices) > 30:
-                    arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
-                                           head_width=1, head_length=1,
-                                           color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
-                                                                  str(hex(int(random.uniform(0.2, 1)*256)))[2:],
-                                                                  Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
-                                           label=arrow_label)
-                else:
-                    arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
-                                           head_width=1, head_length=1,
-                                           color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
-                                                                  str(hex(int(random.uniform(0.2, 1)*256)))[2:],
-                                                                  Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
-                                           label=arrow_label)
-
+                arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
+                                       head_width=1, head_length=1,
+                                       color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
+                                                              str(hex(int(random.uniform(0.2, 1)*256)))[2:],
+                                                              Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
+                                       label=arrow_label)
                 plots.append(arrow_plot)
                 arrow_plots.append(arrow_plot)
                 arrow_labels.append(arrow_label)
@@ -427,26 +424,15 @@ class Graph(object):
         # Plot the route
         for vertex_index in range(len(route_order)-1):
             arrow_label = "Edge {}->{}".format(route_order[vertex_index], route_order[vertex_index+1])
-            if len(route_order) > 30:
-                arrow_plot = plt.arrow(self.vertices[route_order[vertex_index]-1].x,
-                                       self.vertices[route_order[vertex_index]-1].y,
-                                       self.vertices[route_order[vertex_index+1]-1].x - self.vertices[route_order[vertex_index]-1].x,
-                                       self.vertices[route_order[vertex_index+1]-1].y - self.vertices[route_order[vertex_index]-1].y,
-                                       head_width=1, head_length=1,
-                                       color='#{}{}{}'.format(Graph.color_quantization( self.vertices[route_order[vertex_index]-1].vertex_id, len(self.vertices)),
-                                                              str(hex(int(random.uniform(0.2, 1)*256)))[2:],
-                                                              Graph.color_quantization(self.vertices[route_order[vertex_index+1]-1].vertex_id, len(self.vertices))),
-                                       label=arrow_label)
-            else:
-                arrow_plot = plt.arrow(self.vertices[route_order[vertex_index]-1].x,
-                                       self.vertices[route_order[vertex_index]-1].y,
-                                       self.vertices[route_order[vertex_index+1]-1].x - self.vertices[route_order[vertex_index]-1].x,
-                                       self.vertices[route_order[vertex_index+1]-1].y - self.vertices[route_order[vertex_index]-1].y,
-                                       head_width=1, head_length=1,
-                                       color='#{}{}{}'.format(Graph.color_quantization( self.vertices[route_order[vertex_index]-1].vertex_id, len(self.vertices)),
-                                                              str(hex(int(random.uniform(0.2, 1)*256)))[2:],
-                                                              Graph.color_quantization(self.vertices[route_order[vertex_index+1]-1].vertex_id, len(self.vertices))),
-                                       label=arrow_label)
+            arrow_plot = plt.arrow(self.vertices[route_order[vertex_index]-1].x,
+                                   self.vertices[route_order[vertex_index]-1].y,
+                                   self.vertices[route_order[vertex_index+1]-1].x - self.vertices[route_order[vertex_index]-1].x,
+                                   self.vertices[route_order[vertex_index+1]-1].y - self.vertices[route_order[vertex_index]-1].y,
+                                   head_width=1, head_length=1,
+                                   color='#{}{}{}'.format(Graph.color_quantization( self.vertices[route_order[vertex_index]-1].vertex_id, len(self.vertices)),
+                                                          str(hex(int(random.uniform(0.2, 1)*256)))[2:],
+                                                          Graph.color_quantization(self.vertices[route_order[vertex_index+1]-1].vertex_id, len(self.vertices))),
+                                   label=arrow_label)
             arrow_labels.append(arrow_label)
             arrow_plots.append(arrow_plot)
 
