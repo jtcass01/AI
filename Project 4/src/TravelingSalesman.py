@@ -8,6 +8,7 @@ from FileHandler import FileHandler
 from Graph import Route, Graph, Edge
 from Search import BreadthFirstSearchTree, DepthFirstSearchStack
 import numpy as np
+import matplotlib.pyplot as plt
 
 class TravelingSalesman():
     class GeneticAlgorithm(object):
@@ -33,17 +34,19 @@ class TravelingSalesman():
 
             self.population = np.array(self.population)
 
-        def run(self):
+        def run(self, cross_over_every_other=True):
             print("Beginning Genetic Algorithm...")
 
             improvement = 0
+            costs = list([])
             epochs_since_last_improvement = 0
             best_chromosome = min(self.population)
             all_time_best_chromosome = best_chromosome
+            costs.append(best_chromosome.route.distance_traveled)
 
-            while epochs_since_last_improvement < 10:
+            while epochs_since_last_improvement < 100:
                 # Perform cross overs
-                self.perform_crossovers()
+                self.perform_crossovers(cross_over_every_other)
 
                 # Perform mutations
                 self.perform_mutations()
@@ -51,7 +54,7 @@ class TravelingSalesman():
                 # Get new best_chromosome
                 best_chromosome = min(self.population)
 
-                improvement = best_chromosome.route.distance_traveled - all_time_best_chromosome.route.distance_traveled
+                improvement = all_time_best_chromosome.route.distance_traveled - best_chromosome.route.distance_traveled
 
                 if improvement > 0:
                     all_time_best_chromosome = best_chromosome
@@ -60,12 +63,16 @@ class TravelingSalesman():
                     epochs_since_last_improvement += 1
 
                 print("improvement", improvement, "epochs_since_last_improvement", epochs_since_last_improvement)
+                costs.append(all_time_best_chromosome.route.distance_traveled)
 
             self.display_state()
+            plt.plot(costs, label="distance traveled")
+            plt.legend()
+            plt.show()
 
             return best_chromosome.route
 
-        def perform_crossovers(self):
+        def perform_crossovers(self, cross_over_every_other=True):
             chromosome_parent_population = deepcopy(self.population)
             chromosome_parent_population.sort()
             chromosome_parent_population = chromosome_parent_population[:int(len(chromosome_parent_population) * self.crossover_probability)]
@@ -76,7 +83,8 @@ class TravelingSalesman():
                 children_to_replace = [child for child in self.population if child not in chromosome_parent_population]
                 while len(children_to_replace) > 0:
                     random.shuffle(chromosome_parent_population)
-                    baby = chromosome_parent_population[0].crossover(chromosome_parent_population[1])
+                    baby = chromosome_parent_population[0].crossover(chromosome_parent_population[1], cross_over_every_other)
+#                    print("Replacing ", children_to_replace[0], "with", baby)
                     self.replace_chromosome(children_to_replace[0].chromosome_id, baby)
                     children_to_replace.remove(children_to_replace[0])
 
@@ -111,35 +119,48 @@ class TravelingSalesman():
 
                 print(string[:-2] + "]")
 
-            def crossover(self, other_chromosome):
+            def crossover(self, other_chromosome, every_other = True):
                 new_path = list([])
-                self_index = 0
-                other_index = 1
-                my_turn = True
 
-                while len(new_path) < len(self.route.vertices) - 1:
-                    if my_turn and self_index < len(self.route.vertices) - 2:
-                        if self.route.vertices[self_index].vertex_id not in new_path:
-                            new_path.append(self.route.vertices[self_index].vertex_id)
-                            my_turn = False
-                        self_index += 1
-                    else:
-                        if other_chromosome.route.vertices[other_index].vertex_id not in new_path:
-                            new_path.append(other_chromosome.route.vertices[other_index].vertex_id)
-                            my_turn = True
-                        if other_index >= len(other_chromosome.route.vertices) - 2:
-                            my_turn = True
+                if every_other: # Combines chromosome by alternating allels.
+                    self_index = 0
+                    other_index = 1
+                    my_turn = True
+
+                    while len(new_path) < len(self.route.vertices) - 1:
+                        if my_turn and self_index < len(self.route.vertices) - 2:
+                            if self.route.vertices[self_index].vertex_id not in new_path:
+                                new_path.append(self.route.vertices[self_index].vertex_id)
+                                my_turn = False
+                            self_index += 1
                         else:
-                            other_index += 1
+                            if other_chromosome.route.vertices[other_index].vertex_id not in new_path:
+                                new_path.append(other_chromosome.route.vertices[other_index].vertex_id)
+                                my_turn = True
+                            if other_index >= len(other_chromosome.route.vertices) - 2:
+                                my_turn = True
+                            else:
+                                other_index += 1
+                else: # Splits the two chromosomes down the middle
+                    index = 0
+
+                    while len(new_path) < len(self.route.vertices) - 1:
+                        if index < len(self.route.vertices) // 2:
+                            if self.route.vertices[index].vertex_id not in new_path:
+                                new_path.append(self.route.vertices[index].vertex_id)
+                                index += 1
+                        else:
+                            remaining_vertices = [vertex for vertex in self.route.vertices if vertex.vertex_id not in new_path]
+                            for remainining_vertex in remaining_vertices:
+                                new_path.append(remainining_vertex.vertex_id)
 
                 new_route = Route(self.route.graph)
                 new_route.walk_complete_path(new_path)
-
                 return TravelingSalesman.GeneticAlgorithm.Chromosome(None, new_route)
 
             def mutate(self):
                 new_path = list([])
-                mutated_index = random.randint(0, len(self.route.vertices)-3)
+                mutated_index = random.randint(0, len(self.route.vertices)-2)
                 swap_vertex = None
 
                 for vertex_index, vertex in enumerate(self.route.vertices[:-1]):
@@ -523,11 +544,12 @@ if __name__ == "__main__":
         elif algorithm == "genetic":
             start = time.time()
 
-            result = TravelingSalesman.GeneticAlgorithm(graph, 20, 0.6, 0.1).run()
-            # print("genetic solution", str(result), result.recount_distance())
-            # print("Time elaspsed: {}".format(end-start))
+            result = TravelingSalesman.GeneticAlgorithm(graph, 10, 0.6, 0.3).run(cross_over_every_other=True)
 
             end = time.time()
-            # result.plot()
+            print("genetic solution", str(result), result.recount_distance())
+            print("Time elaspsed: {}".format(end-start))
+
+            result.plot()
         else:
             print("Invalid solve_method.  Current implemented solve methods include: brute_force")
