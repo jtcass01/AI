@@ -36,12 +36,56 @@ class TravelingSalesman():
         def run(self):
             print("Beginning Genetic Algorithm...")
 
-            baby = self.population[0].crossover(self.population[1])
-            self.replace_chromosome(9, baby)
+            improvement = 0
+            epochs_since_last_improvement = 0
+            best_chromosome = min(self.population)
+            all_time_best_chromosome = best_chromosome
+
+            while epochs_since_last_improvement < 10:
+                # Perform cross overs
+                self.perform_crossovers()
+
+                # Perform mutations
+                self.perform_mutations()
+
+                # Get new best_chromosome
+                best_chromosome = min(self.population)
+
+                improvement = best_chromosome.route.distance_traveled - all_time_best_chromosome.route.distance_traveled
+
+                if improvement > 0:
+                    all_time_best_chromosome = best_chromosome
+                    epochs_since_last_improvement = 0
+                else:
+                    epochs_since_last_improvement += 1
+
+                print("improvement", improvement, "epochs_since_last_improvement", epochs_since_last_improvement)
 
             self.display_state()
 
-            return None
+            return best_chromosome.route
+
+        def perform_crossovers(self):
+            chromosome_parent_population = deepcopy(self.population)
+            chromosome_parent_population.sort()
+            chromosome_parent_population = chromosome_parent_population[:int(len(chromosome_parent_population) * self.crossover_probability)]
+            if len(chromosome_parent_population) < 2:
+                # Cant do any cross overs
+                pass
+            else:
+                children_to_replace = [child for child in self.population if child not in chromosome_parent_population]
+                while len(children_to_replace) > 0:
+                    random.shuffle(chromosome_parent_population)
+                    baby = chromosome_parent_population[0].crossover(chromosome_parent_population[1])
+                    self.replace_chromosome(children_to_replace[0].chromosome_id, baby)
+                    children_to_replace.remove(children_to_replace[0])
+
+        def perform_mutations(self):
+            mutation_population = deepcopy(self.population)
+            random.shuffle(mutation_population)
+            mutation_population = mutation_population[:int(len(mutation_population) * self.mutation_probability)]
+            for mutant in mutation_population:
+                mutant.mutate()
 
         def display_state(self):
             for chromosome in self.population:
@@ -92,6 +136,24 @@ class TravelingSalesman():
                 new_route.walk_complete_path(new_path)
 
                 return TravelingSalesman.GeneticAlgorithm.Chromosome(None, new_route)
+
+            def mutate(self):
+                new_path = list([])
+                mutated_index = random.randint(0, len(self.route.vertices)-3)
+                swap_vertex = None
+
+                for vertex_index, vertex in enumerate(self.route.vertices[:-1]):
+                    if vertex_index == mutated_index:
+                        swap_vertex = vertex
+                    elif vertex_index == mutated_index + 1:
+                        new_path.append(vertex.vertex_id)
+                        new_path.append(swap_vertex.vertex_id)
+                    else:
+                        new_path.append(vertex.vertex_id)
+
+                new_path = np.array(new_path)
+                self.route.reset_route()
+                self.route.walk_complete_path(new_path)
 
             def __eq__(self, other):
                 return self.route.distance_traveled == other.route.distance_traveled
@@ -461,7 +523,7 @@ if __name__ == "__main__":
         elif algorithm == "genetic":
             start = time.time()
 
-            result = TravelingSalesman.GeneticAlgorithm(graph, 10, 0.8, 0.01).run()
+            result = TravelingSalesman.GeneticAlgorithm(graph, 20, 0.6, 0.1).run()
             # print("genetic solution", str(result), result.recount_distance())
             # print("Time elaspsed: {}".format(end-start))
 
