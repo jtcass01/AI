@@ -163,12 +163,12 @@ class TravelingSalesman():
 
             def mutate(self):
                 new_path = list([])
+                # Generate random indices for swapping
                 mutated_index_0 = random.randint(0, len(self.route.vertices)-3)
                 mutated_index_1 = random.randint(mutated_index_0+1, len(self.route.vertices)-2)
-                while mutated_index_1 == mutated_index_0:
-                    mutated_index_1 = random.randint(mutated_index_0+1, len(self.route.vertices)-2)
                 swap_vertex = None
 
+                # Iterate over the vertices until the swap_vertex is found.  Keep track and replace when at new location.
                 for vertex_index, vertex in enumerate(self.route.vertices[:-1]):
                     if vertex_index == mutated_index_0:
                         swap_vertex = vertex
@@ -178,6 +178,7 @@ class TravelingSalesman():
                     else:
                         new_path.append(vertex.vertex_id)
 
+                # Cast to NumPy Array.  Reset route and walk the new path.
                 new_path = np.array(new_path)
                 self.route.reset_route()
                 self.route.walk_complete_path(new_path)
@@ -550,7 +551,7 @@ if __name__ == "__main__":
         elif algorithm == "genetic":
             start = time.time()
 
-            result = TravelingSalesman.GeneticAlgorithm(graph, 50, 0.6, 0.02).run(cross_over_every_other=False)
+            result = TravelingSalesman.GeneticAlgorithm(graph, 100, 0.6, 0.02).run(cross_over_every_other=True)
 
             end = time.time()
             print("genetic solution", str(result), result.recount_distance())
