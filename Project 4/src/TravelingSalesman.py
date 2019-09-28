@@ -44,10 +44,12 @@ class TravelingSalesman():
             all_time_best_chromosome = best_chromosome
             costs.append(best_chromosome.route.distance_traveled)
 
-            while epochs_since_last_improvement < 100:
+            while epochs_since_last_improvement < 10:
+                print("Performing cross overs...")
                 # Perform cross overs
                 self.perform_crossovers(cross_over_every_other)
 
+                print("Performing mutations...")
                 # Perform mutations
                 self.perform_mutations()
 
@@ -81,12 +83,10 @@ class TravelingSalesman():
                 pass
             else:
                 children_to_replace = [child for child in self.population if child not in chromosome_parent_population]
-                while len(children_to_replace) > 0:
+                for chromosome in children_to_replace:
                     random.shuffle(chromosome_parent_population)
                     baby = chromosome_parent_population[0].crossover(chromosome_parent_population[1], cross_over_every_other)
-#                    print("Replacing ", children_to_replace[0], "with", baby)
-                    self.replace_chromosome(children_to_replace[0].chromosome_id, baby)
-                    children_to_replace.remove(children_to_replace[0])
+                    self.replace_chromosome(chromosome.chromosome_id, baby)
 
         def perform_mutations(self):
             mutation_population = deepcopy(self.population)
@@ -128,7 +128,7 @@ class TravelingSalesman():
                     my_turn = True
 
                     while len(new_path) < len(self.route.vertices) - 1:
-                        if my_turn and self_index < len(self.route.vertices) - 2:
+                        if my_turn and self_index < len(self.route.vertices) - 1:
                             if self.route.vertices[self_index].vertex_id not in new_path:
                                 new_path.append(self.route.vertices[self_index].vertex_id)
                                 my_turn = False
@@ -156,19 +156,25 @@ class TravelingSalesman():
 
                 new_route = Route(self.route.graph)
                 new_route.walk_complete_path(new_path)
-                return TravelingSalesman.GeneticAlgorithm.Chromosome(None, new_route)
+
+                resultant_chromosome = TravelingSalesman.GeneticAlgorithm.Chromosome(None, new_route)
+
+                return resultant_chromosome
 
             def mutate(self):
                 new_path = list([])
-                mutated_index = random.randint(0, len(self.route.vertices)-2)
+                mutated_index_0 = random.randint(0, len(self.route.vertices)-3)
+                mutated_index_1 = random.randint(mutated_index_0+1, len(self.route.vertices)-2)
+                while mutated_index_1 == mutated_index_0:
+                    mutated_index_1 = random.randint(mutated_index_0+1, len(self.route.vertices)-2)
                 swap_vertex = None
 
                 for vertex_index, vertex in enumerate(self.route.vertices[:-1]):
-                    if vertex_index == mutated_index:
+                    if vertex_index == mutated_index_0:
                         swap_vertex = vertex
-                    elif vertex_index == mutated_index + 1:
-                        new_path.append(vertex.vertex_id)
+                    elif vertex_index == mutated_index_1:
                         new_path.append(swap_vertex.vertex_id)
+                        new_path.insert(mutated_index_0, vertex.vertex_id)
                     else:
                         new_path.append(vertex.vertex_id)
 
@@ -544,7 +550,7 @@ if __name__ == "__main__":
         elif algorithm == "genetic":
             start = time.time()
 
-            result = TravelingSalesman.GeneticAlgorithm(graph, 10, 0.6, 0.3).run(cross_over_every_other=True)
+            result = TravelingSalesman.GeneticAlgorithm(graph, 50, 0.6, 0.02).run(cross_over_every_other=False)
 
             end = time.time()
             print("genetic solution", str(result), result.recount_distance())
