@@ -41,8 +41,6 @@ class GeneticAlgorithm(object):
         self.population = np.array(self.population)
 
     def run(self):
-        print("Beginning Genetic Algorithm...")
-
         improvement = 0
         self.costs = list([])
         epochs_since_last_improvement = 0
@@ -51,11 +49,9 @@ class GeneticAlgorithm(object):
         self.costs.append(best_chromosome.route.distance_traveled)
 
         while epochs_since_last_improvement < self.epoch_threshold:
-            print("Performing cross overs...")
             # Perform cross overs
             self.perform_crossovers()
 
-            print("Performing mutations...")
             # Perform mutations
             self.perform_mutations()
 
@@ -70,7 +66,6 @@ class GeneticAlgorithm(object):
             else:
                 epochs_since_last_improvement += 1
 
-            print("improvement", improvement, "epochs_since_last_improvement", epochs_since_last_improvement)
             self.costs.append(all_time_best_chromosome.route.distance_traveled)
 
         return best_chromosome.route
@@ -137,16 +132,12 @@ class GeneticAlgorithm(object):
                 while len(new_path) < len(self.route.vertices)-1:
                     if self_turn:
                         remaining_vertex_ids = [vertex.vertex_id for vertex in self.route.vertices if vertex.vertex_id not in new_path]
-                        print("Remaining vertex ids for self: ", remaining_vertex_ids)
-
                         if len(remaining_vertex_ids) > 0:
                             new_path.append(random.choice(remaining_vertex_ids))
 
                         self_turn = False
                     else:
                         remaining_vertex_ids = [vertex.vertex_id for vertex in other_chromosome.route.vertices if vertex.vertex_id not in new_path]
-                        print("Remaining vertex ids for other: ", remaining_vertex_ids)
-
                         if len(remaining_vertex_ids) > 0:
                             new_path.append(random.choice(remaining_vertex_ids))
 
@@ -341,17 +332,17 @@ class WisdomOfCrowds_GeneticAlgorithm():
     def run(self):
         genetic_algorithm_threads = list([])
 
+        print("Generating Genetic Algorithm Threads...")
         for genetic_algorithm in self.genetic_algorithms:
-            genetic_algorithm_threads.append(threading.thread(target=genetic_algorithm.run(), args=None))
+            genetic_algorithm_threads.append(threading.Thread(target=genetic_algorithm.run(), args=None))
 
+        print("Starting Genetic Algorithm Threads...")
         for genetic_algorithm_thread in genetic_algorithm_threads:
             genetic_algorithm_thread.start()
 
+        print("Waiting for Genetic Algorithm Threads to join...")
         for genetic_algorithm_thread in genetic_algorithm_threads:
             genetic_algorithm_thread.join()
-
-        for genetic_algorithm in self.genetic_algorithms:
-            genetic_algorithm.display_result()
 
 def build_chromosome_from_path_and_graph(chromosome_id, path, graph, crossover_method, mutation_method):
     route = Route(graph)
@@ -438,19 +429,41 @@ def traveling_salesman_solution_test():
 
     result.plot()
 
-def test_WisdomOfCrowds_GeneticAlgorithm():
+def WisdomOfCrowds_GeneticAlgorithm_test():
     # Read in test data
-    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp"))
+    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random77.tsp"))
     # calculate edges
     graph.build_graph()
 
     uniform_twors = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=20, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
     uniform_rsm = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=20, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+    every_other_twors = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=20, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.EVERY_OTHER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
+    every_other_rms = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=20, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.EVERY_OTHER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
     ordered_crossover_twors = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=20, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
     ordered_crossover_rsm = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=20, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
 
-    test_algorithm = WisdomOfCrowds_GeneticAlgorithm(genetic_algorithms=[uniform_twors, uniform_rsm, ordered_crossover_twors, ordered_crossover_rsm], weights=[0.15, 0.275, 0.225, 0.35])
+    algorithms = [uniform_twors, uniform_rsm, ordered_crossover_twors, ordered_crossover_rsm]
+
+    test_algorithm = WisdomOfCrowds_GeneticAlgorithm(genetic_algorithms=algorithms, weights=[0.1, 0.275, 0.05, 0.05, 0.175, 0.35])
     test_algorithm.run()
 
+    print("uniform_twors")
+    uniform_twors.display_result()
+
+    print("uniform_rsm")
+    uniform_rsm.display_result()
+
+    print("every_other_twors")
+    every_other_twors.display_result()
+
+    print("every_other_rms")
+    every_other_rms.display_result()
+
+    print("ordered_crossover_twors")
+    ordered_crossover_twors.display_result()
+
+    print("ordered_crossover_rsm")
+    ordered_crossover_rsm.display_result()
+
 if __name__ == "__main__":
-    traveling_salesman_solution_test()
+    WisdomOfCrowds_GeneticAlgorithm_test()
