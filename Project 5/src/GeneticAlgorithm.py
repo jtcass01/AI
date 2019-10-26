@@ -24,6 +24,7 @@ class GeneticAlgorithm(object):
         self.epoch_threshold = epoch_threshold
         self.population = list([])
         self.costs = list([])
+        self.best_chromosome = None
         self.initialize_population()
         self.display_state()
 
@@ -45,7 +46,7 @@ class GeneticAlgorithm(object):
         self.costs = list([])
         epochs_since_last_improvement = 0
         best_chromosome = min(self.population)
-        all_time_best_chromosome = best_chromosome
+        self.best_chromosome = best_chromosome
         self.costs.append(best_chromosome.route.distance_traveled)
 
         while epochs_since_last_improvement < self.epoch_threshold:
@@ -58,23 +59,24 @@ class GeneticAlgorithm(object):
             # Get new best_chromosome
             best_chromosome = min(self.population)
 
-            improvement = all_time_best_chromosome.route.distance_traveled - best_chromosome.route.distance_traveled
+            improvement = self.best_chromosome.route.distance_traveled - best_chromosome.route.distance_traveled
 
             if improvement > 0:
-                all_time_best_chromosome = best_chromosome
+                self.best_chromosome = best_chromosome
                 epochs_since_last_improvement = 0
             else:
                 epochs_since_last_improvement += 1
 
-            self.costs.append(all_time_best_chromosome.route.distance_traveled)
+            self.costs.append(self.best_chromosome.route.distance_traveled)
 
-        return best_chromosome.route
+        return self.best_chromosome.route
 
     def display_result(self):
         self.display_state()
         plt.plot(self.costs, label="distance traveled")
         plt.legend()
         plt.show()
+        self.best_chromosome.route.plot()
 
     def perform_crossovers(self):
         chromosome_parent_population = deepcopy(self.population, memo={})
@@ -146,23 +148,36 @@ class GeneticAlgorithm(object):
             elif self.crossover_method == GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED:
                 p1 = random.randint(1, len(self.route.vertices)-3)
                 p2 = random.randint(p1+1, len(self.route.vertices)-2)
-                self_ids = [vertex.vertex_id for vertex in self.route.vertices]
+
+                self_ids = [vertex.vertex_id for vertex in self.route.vertices][:-1]
                 self_s1 = self_ids[:p1]
                 self_s2 = self_ids[p1:p2]
-                self_s3 = self_ids[p2:-1]
+                self_s3 = self_ids[p2:]
 
-                other_ids = [vertex.vertex_id for vertex in other_chromosome.route.vertices]
+                other_ids = [vertex.vertex_id for vertex in other_chromosome.route.vertices][:-1]
                 other_s1 = other_ids[:p1]
                 other_s2 = other_ids[p1:p2]
-                other_s3 = other_ids[p2:-1]
+                other_s3 = other_ids[p2:]
 
                 new_path = self_s1
-                s2_left = [vertex_id for vertex_id in other_s2 if vertex_id not in self_s1 and vertex_id not in self_s3]
-                s3_left = [vertex_id for vertex_id in other_s3 if vertex_id not in self_s1 and vertex_id not in self_s3]
-                s1_left = [vertex_id for vertex_id in other_s1 if vertex_id not in self_s1 and vertex_id not in self_s3]
+
+                s2_left = list([])
+                for vertex_id in other_s2:
+                    if vertex_id not in self_s1 and vertex_id not in self_s3:
+                        s2_left.append(vertex_id)
+
+                s3_left = list([])
+                for vertex_id in other_s3:
+                    if vertex_id not in self_s1 and vertex_id not in self_s3:
+                        s3_left.append(vertex_id)
+
+                s1_left = list([])
+                for vertex_id in other_s1:
+                    if vertex_id not in self_s1 and vertex_id not in self_s3:
+                        s1_left.append(vertex_id)
 
                 remaining_vertex_ids = s2_left + s3_left + s1_left
-                new_path += remaining_vertex_ids[:2]
+                new_path += remaining_vertex_ids[:p2-p1]
 
                 new_path += self_s3
 
@@ -285,6 +300,12 @@ class WisdomOfCrowds_GeneticAlgorithm():
     def generate_heat_map(self):
         edges = {}
 
+        for weight, algorithm in zip(self.weights, self.genetic_algorithms):
+            chromsomes_to_get = int(weight * len(algorithm.population))
+            if chromosomes_to_get > 0:
+                pass
+
+
 def build_chromosome_from_path_and_graph(chromosome_id, path, graph, crossover_method, mutation_method):
     route = Route(graph)
     route.walk_complete_path(path)
@@ -313,13 +334,13 @@ def crossover_test():
 
         elif crossover_method == GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED:
             # Read in test data
-            graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random6.tsp"))
+            graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random8.tsp"))
 
-            parent_path_1 = [1, 2, 3, 4, 5, 6]
+            parent_path_1 = [3, 5, 1, 4, 7, 6, 2, 8]
             print("Parent 1: ", parent_path_1)
             parent_chromosome_1 = build_chromosome_from_path_and_graph(1, parent_path_1, graph, crossover_method, mutation_method)
 
-            parent_path_2 = [4, 3, 2, 1, 6, 5]
+            parent_path_2 = [4, 6, 5, 1, 8, 3, 2, 7]
             print("Parent 2: ", parent_path_2)
             parent_chromosome_2 = build_chromosome_from_path_and_graph(2, parent_path_2, graph, crossover_method, mutation_method)
 
@@ -365,9 +386,9 @@ def traveling_salesman_solution_test():
     # calculate edges
     graph.build_graph()
 
-    result = GeneticAlgorithm(graph=graph, population_size=100, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=20, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION).run()
-
-    result.plot()
+    test_algorithm = GeneticAlgorithm(graph=graph, population_size=25, crossover_probability=0.7, mutation_probability=0.02, epoch_threshold=20, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+    test_algorithm.run()
+    test_algorithm.display_result()
 
 def WisdomOfCrowds_GeneticAlgorithm_test():
     # Read in test data
@@ -384,7 +405,7 @@ def WisdomOfCrowds_GeneticAlgorithm_test():
 
     algorithms = [uniform_twors, uniform_rsm, partially_mapped_twors, partially_mapped_rms, ordered_crossover_twors, ordered_crossover_rsm]
 
-    test_algorithm = WisdomOfCrowds_GeneticAlgorithm(genetic_algorithms=algorithms, weights=[0.075, 0.075, 0.025, 0.025, 0.40, 0.40])
+    test_algorithm = WisdomOfCrowds_GeneticAlgorithm(genetic_algorithms=algorithms, weights=[0.05, 0.05, 0.05, 0.05, 0.4, 0.4])
     test_algorithm.run()
 
     print("uniform_twors")
