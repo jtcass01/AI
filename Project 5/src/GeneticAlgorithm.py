@@ -6,6 +6,7 @@ import os
 import time
 import random
 import re
+import datetime
 from copy import deepcopy
 from FileHandler import FileHandler
 from Graph import Route, Graph, Edge
@@ -27,7 +28,6 @@ class GeneticAlgorithm(object):
         self.costs = list([])
         self.best_chromosome = None
         self.initialize_population()
-        self.display_state()
 
     def initialize_population(self):
         city_range = list(range(1, 1 + len(self.graph.vertices)))
@@ -322,7 +322,7 @@ class WisdomOfCrowds_GeneticAlgorithm():
                 if self.edge_dictionary[str(edge)] > self.max_edge_count:
                     self.max_edge_count = self.edge_dictionary[str(edge)]
 
-    def generate_heat_map(self):
+    def generate_heat_map(self, superiority_tolerance=0.8):
         graph = self.genetic_algorithms[0].graph
         x = list([])
         y = list([])
@@ -340,24 +340,33 @@ class WisdomOfCrowds_GeneticAlgorithm():
         plots.append(vertex_plot)
 
         for edge_key, edge_count in self.edge_dictionary.items():
-            print(edge_count, edge_key)
-            vertices = re.findall(r'\d+', edge_key)
-            vertex_start = graph.get_vertex_by_id(int(vertices[0]))
-            vertex_end = graph.get_vertex_by_id(int(vertices[1]))
-            arrow_label = "Edge {}->{}".format(vertices[0], vertices[1])
-            arrow_plot = plt.arrow(vertex_start.x, vertex_start.y, vertex_end.x-vertex_start.x, vertex_end.y-vertex_start.y,
-                                   head_width=1, head_length=1,
-                                   color='#{}{}{}'.format(normalize_rgb(self.max_edge_count - edge_count, 0, self.max_edge_count),
-                                                          "00",
-                                                          normalize_rgb(edge_count, 0, self.max_edge_count)),
-                                   label=arrow_label)
-            plots.append(arrow_plot)
-            arrow_plots.append(arrow_plot)
-            arrow_labels.append(arrow_label)
+            if edge_count > (self.max_edge_count * superiority_tolerance):
+                vertices = re.findall(r'\d+', edge_key)
+                vertex_start = graph.get_vertex_by_id(int(vertices[0]))
+                vertex_end = graph.get_vertex_by_id(int(vertices[1]))
+                arrow_label = "Edge {}->{}".format(vertices[0], vertices[1])
+                arrow_plot = plt.arrow(vertex_start.x, vertex_start.y, vertex_end.x-vertex_start.x, vertex_end.y-vertex_start.y,
+                                       head_width=1, head_length=1,
+                                       color='#{}{}{}'.format(normalize_rgb(self.max_edge_count - edge_count, 0, self.max_edge_count),
+                                                              "00",
+                                                              normalize_rgb(edge_count, 0, self.max_edge_count)),
+                                       label=arrow_label)
+                plots.append(arrow_plot)
+                arrow_plots.append(arrow_plot)
+                arrow_labels.append(arrow_label)
 
         # Show the graph with a legend
         plt.legend(arrow_plots, arrow_labels, loc=2, fontsize='small')
         plt.show()
+
+    def log_results(self, log_path):
+        log = open(log_path, "w+")
+        log.write("edge_key" + ", " + "edge_count" + "\n")
+
+        for edge_key, edge_count in self.edge_dictionary.items():
+            log.write(str(edge_key) + ", " + str(edge_count) + "\n")
+
+        log.close()
 
 
 def normalize_rgb(value, min_possible_value, max_possible_value):
@@ -461,7 +470,7 @@ def traveling_salesman_solution_test():
 
 def WisdomOfCrowds_GeneticAlgorithm_test(epoch_threshold=25):
     # Read in test data
-    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random77.tsp"))
+    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp"))
     # calculate edges
     graph.build_graph()
 
@@ -474,8 +483,9 @@ def WisdomOfCrowds_GeneticAlgorithm_test(epoch_threshold=25):
 
     algorithms = [uniform_twors, uniform_rsm, partially_mapped_twors, partially_mapped_rms, ordered_crossover_twors, ordered_crossover_rsm]
 
-    test_algorithm = WisdomOfCrowds_GeneticAlgorithm(genetic_algorithms=algorithms, weights=[0.05, 0.05, 0.05, 0.05, 0.4, 0.4])
+    test_algorithm = WisdomOfCrowds_GeneticAlgorithm(genetic_algorithms=algorithms, weights=[0.05, 0.05, 0.05, 0.05, 0.6, 0.2])
     test_algorithm.run()
+    test_algorithm.log_results(os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "crowd_" + "Random44_" + datetime.datetime.now().isoformat()[:10] + ".csv")
     test_algorithm.generate_heat_map()
 
     print("uniform_twors")
@@ -497,4 +507,4 @@ def WisdomOfCrowds_GeneticAlgorithm_test(epoch_threshold=25):
     ordered_crossover_rsm.display_result()
 
 if __name__ == "__main__":
-    WisdomOfCrowds_GeneticAlgorithm_test(epoch_threshold=25)
+    WisdomOfCrowds_GeneticAlgorithm_test(epoch_threshold=20)

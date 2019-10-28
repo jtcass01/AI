@@ -12,6 +12,9 @@ class FileHandler():
         adjacency_matrix = pd.read_csv(adjacency_matrix_file_path, dtype='int')
         return adjacency_matrix
 
+    def create_log(file_path):
+        pass
+
     @staticmethod
     def read_graph(vertex_file_path, adjacency_matrix=None):
         # Initialize list and index
