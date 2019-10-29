@@ -353,7 +353,7 @@ def traveling_salesman_solution_test():
     # calculate edges
     graph.build_graph()
 
-    test_algorithm = GeneticAlgorithm(graph=graph, population_size=25, crossover_probability=0.7, mutation_probability=0.02, epoch_threshold=20, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+    test_algorithm = GeneticAlgorithm(graph=graph, population_size=50, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=30, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
     test_algorithm.run()
     test_algorithm.display_result()
 

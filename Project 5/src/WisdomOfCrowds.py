@@ -76,6 +76,8 @@ class CrowdSolution(object):
         log.close()
 
     def add_edge_entry(self, new_edge_entry):
+        ## EDGE CANNOT BE REMOVED HERE. NEEDS TO BE CONSERVATIVE
+        ## ISSUE
         spot_taken = False
         keys_to_be_deleted = list([])
 
@@ -216,7 +218,8 @@ class CrowdSolution(object):
                     missing_start = vertex
                 if vertex.vertex_id not in ending_vertices:
                     missing_end = vertex
-            self.route.add_edge(Edge(missing_start, missing_end))
+            if missing_start is not None:
+                self.route.add_edge(Edge(missing_start, missing_end))
 
         return self.route
 
@@ -351,6 +354,6 @@ def WOC_start_to_finish(graph_location, log_location, epoch_threshold=25, superi
 
 
 if __name__ == "__main__":
-    WOC_start_to_finish(graph_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random22.tsp", \
-                  log_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "crowd_" + "Random22_" + datetime.datetime.now().isoformat()[:10] + ".csv",
-                  superiority_tolerance=0.4)
+    WOC_load_test(graph_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp", \
+                  log_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "crowd_" + "Random44_" + datetime.datetime.now().isoformat()[:10] + "_0.csv",
+                  superiority_tolerance=0.0)

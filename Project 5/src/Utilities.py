@@ -156,7 +156,7 @@ class Math():
 
         color_value = hex(int(size_of_bins) * value)[2:]
 
-        if int(color_value, 16) < 10:
+        if len(color_value) == 1:
             return "0" + color_value
         else:
             return color_value

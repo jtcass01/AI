@@ -223,9 +223,9 @@ class Route(object):
             arrow_label = "Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)
             arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
                                    head_width=1, head_length=1,
-                                   color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.graph.vertices)),
-                                                          Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.graph.vertices)),
-                                                          Graph.color_quantization(adjacent_vertex.vertex_id, len(self.graph.vertices))),
+                                   color='#{}{}{}'.format(Math.color_quantization(vertex.vertex_id, len(self.graph.vertices)),
+                                                          Math.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.graph.vertices)),
+                                                          Math.color_quantization(adjacent_vertex.vertex_id, len(self.graph.vertices))),
                                    label=arrow_label)
             arrow_labels.append(arrow_label)
             arrow_plots.append(arrow_plot)
@@ -466,9 +466,9 @@ class Graph(object):
                 arrow_label = "Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)
                 arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
                                        head_width=1, head_length=1,
-                                       color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices)),
+                                       color='#{}{}{}'.format(Math.color_quantization(vertex.vertex_id, len(self.vertices)),
                                                               str(hex(int(random.uniform(0.2, 1)*256)))[2:],
-                                                              Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
+                                                              Math.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
                                        label=arrow_label)
                 plots.append(arrow_plot)
                 arrow_plots.append(arrow_plot)
@@ -502,9 +502,9 @@ class Graph(object):
                                    self.vertices[route_order[vertex_index+1]-1].x - self.vertices[route_order[vertex_index]-1].x,
                                    self.vertices[route_order[vertex_index+1]-1].y - self.vertices[route_order[vertex_index]-1].y,
                                    head_width=1, head_length=1,
-                                   color='#{}{}{}'.format(Graph.color_quantization( self.vertices[route_order[vertex_index]-1].vertex_id, len(self.vertices)),
+                                   color='#{}{}{}'.format(Math.color_quantization( self.vertices[route_order[vertex_index]-1].vertex_id, len(self.vertices)),
                                                           str(hex(int(random.uniform(0.2, 1)*256)))[2:],
-                                                          Graph.color_quantization(self.vertices[route_order[vertex_index+1]-1].vertex_id, len(self.vertices))),
+                                                          Math.color_quantization(self.vertices[route_order[vertex_index+1]-1].vertex_id, len(self.vertices))),
                                    label=arrow_label)
             arrow_labels.append(arrow_label)
             arrow_plots.append(arrow_plot)
@@ -521,17 +521,3 @@ class Graph(object):
             return False
         else:
             return True
-
-    @staticmethod
-    def color_quantization(vertex_id, n):
-        assert 1 <= vertex_id <= n, "Invalid vertex_id for color_quantization ({}) for color look_up.  " \
-                                     "Please update date to fit new range.".format(vertex_id)
-
-        size_of_bins = (256 - 0 + 1) / n
-
-        color_value = hex(int(size_of_bins) * vertex_id)[2:]
-
-        if len(color_value) == 1:
-            return "0" + color_value
-        else:
-            return color_value
