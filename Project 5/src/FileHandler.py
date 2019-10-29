@@ -21,6 +21,8 @@ class FileHandler():
         vertices = np.array([])
         vertex_index = 0
 
+        print(vertex_file_path)
+
         # Try to open the file
         try:
             vertex_file = open(vertex_file_path, "r")

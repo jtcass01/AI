@@ -3,10 +3,13 @@ import sys
 import os
 import time
 import random
+import datetime
 from copy import deepcopy
 from FileHandler import FileHandler
 from Graph import Route, Graph, Edge
 from Search import BreadthFirstSearchTree, DepthFirstSearchStack
+from WisdomOfCrowds import WisdomOfCrowds_GeneticAlgorithm
+from GeneticAlgorithm import GeneticAlgorithm
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -455,7 +458,7 @@ if __name__ == "__main__":
         print("Command Line Arguments should follow the format:")
         print("python TrainingSalesman.py [algorithm] [relative path to vertex_graph_file]"
               " [relative path to adjacency_matrix_file or none] [optional: starting_vertex_id]")
-        print("\nImplemented algorithms include: brute_force, bfs, dfs, greedy")
+        print("\nImplemented algorithms include: brute_force, bfs, dfs, greedy, woc")
     else:
         # retrieve solve_method
         algorithm = sys.argv[1]
@@ -555,6 +558,36 @@ if __name__ == "__main__":
 
             end = time.time()
             print("genetic solution", str(result), result.recount_distance())
+            print("Time elaspsed: {}".format(end-start))
+
+            result.plot()
+        elif algorithm == "woc":
+            start = time.time()
+
+            epoch_threshold = 25
+
+            uniform_twors = GeneticAlgorithm(graph, population_size=30, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
+            uniform_rsm = GeneticAlgorithm(graph, population_size=30, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+            partially_mapped_twors = GeneticAlgorithm(graph, population_size=30, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
+            partially_mapped_rms = GeneticAlgorithm(graph, population_size=30, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+            ordered_crossover_twors = GeneticAlgorithm(graph, population_size=30, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
+            ordered_crossover_rsm = GeneticAlgorithm(graph, population_size=30, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+
+            algorithms = [uniform_twors, uniform_rsm, partially_mapped_twors, partially_mapped_rms, ordered_crossover_twors, ordered_crossover_rsm]
+            weights = [0.05, 0.05, 0.05, 0.05, 0.6, 0.2]
+
+            log_location = os.path.splitext(os.path.basename(vertex_graph_file_path))[0]
+            log_location = os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "crowd_" + log_location + "_" + datetime.datetime.now().isoformat()[:10] + ".csv"
+
+            test_algorithm = WisdomOfCrowds_GeneticAlgorithm(genetic_algorithms=algorithms, weights=weights, log_location=log_location)
+            test_algorithm.run()
+
+            test_crowd_solution = CrowdSolution(graph)
+            test_crowd_solution.load(log_location)
+            result = test_crowd_solution.complete_graph_greedy_heuristic(superiority_tolerance=superiority_tolerance)
+
+            end = time.time()
+            print("woc solution", str(result), result.recount_distance())
             print("Time elaspsed: {}".format(end-start))
 
             result.plot()

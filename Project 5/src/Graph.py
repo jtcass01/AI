@@ -114,6 +114,70 @@ class Route(object):
 
         return string
 
+    def get_suggested_edge_index(self, edge):
+        new_edge_vertex_0 = edge.vertices[0]
+        new_edge_vertex_1 = edge.vertices[1]
+
+        for edge_index, edge in enumerate(self.edges):
+            old_edge_vertex_0 = edge.vertices[0]
+            old_edge_vertex_1 = edge.vertices[1]
+            if new_edge_vertex_1 == old_edge_vertex_0:
+                # Edge needs to go in front of old edge
+                return edge_index
+            elif new_edge_vertex_0 == old_edge_vertex_1:
+                # Edge needs to go in after old age
+                return edge_index+1
+            else:
+                # Edge can go anywhere
+                return -1
+
+    def add_edge(self, edge):
+        vertex_start = self.graph.get_vertex_by_id(edge.vertices[0].vertex_id)
+        vertex_end = self.graph.get_vertex_by_id(edge.vertices[1].vertex_id)
+
+        # Add the new vertex to the array of vertices
+        if self.vertices is None:
+            # Initialize the distance traveled to 0
+            self.distance_traveled += edge.distance
+            # Add the starting vertex to the vertex_order
+            self.vertices = np.array([vertex_start, vertex_end])
+            # Mark the vertex as being visited
+        else:
+            vertex_start_index = np.where(self.vertices == vertex_start)[0]
+            vertex_stop_index = np.where(self.vertices == vertex_start)[0]
+
+            # starting vertex already present
+            if vertex_start_index > -1 and vertex_stop_index < 0:
+                self.vertices = np.insert(self.vertices, vertex_start_index+1, vertex_end)
+            # ending vertex already present
+            elif vertex_stop_index > -1 and vertex_start_index < 0:
+                self.vertices = np.insert(self.vertices, vertex_stop_index, vertex_start)
+            # both vertices are already present.
+            elif vertex_stop_index > -1 and vertex_start_index > -1:
+                pass
+            # neither vertex already present
+            else:
+                self.vertices = np.append(self.vertices, vertex_start)
+                self.vertices = np.append(self.vertices, vertex_end)
+
+            # Find the distance between the goto vertex and the last vertex visited
+            self.distance_traveled += edge.distance
+
+        # Mark the vertex as being visited
+        vertex_start.visited = True
+        vertex_end.visited = True
+
+        # Add the new edge to the array of edges
+        if self.edges is None:
+            self.edges = np.array([edge])
+        else:
+            edge_index = self.get_suggested_edge_index(edge)
+            if edge_index > 0:
+                self.edges = np.insert(self.edges, edge_index, edge)
+            else:
+                self.edges = np.append(self.edges, [edge])
+
+
     def walk_complete_path(self, path):
         for vertex_id in path:
             self.goto(self.graph.get_vertex_by_id(vertex_id))
@@ -159,9 +223,9 @@ class Route(object):
             arrow_label = "Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)
             arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
                                    head_width=1, head_length=1,
-                                   color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.vertices[:-1])),
-                                                          Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.vertices[:-1])),
-                                                          Graph.color_quantization(adjacent_vertex.vertex_id, len(self.vertices[:-1]))),
+                                   color='#{}{}{}'.format(Graph.color_quantization(vertex.vertex_id, len(self.graph.vertices)),
+                                                          Graph.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.graph.vertices)),
+                                                          Graph.color_quantization(adjacent_vertex.vertex_id, len(self.graph.vertices))),
                                    label=arrow_label)
             arrow_labels.append(arrow_label)
             arrow_plots.append(arrow_plot)
@@ -174,7 +238,7 @@ class Route(object):
         if len(self.vertices) > 2:
             twice_last_visited_vertex = self.vertices[-2]
             last_visited_vertex = self.vertices[-1]
-            last_visited_vertex.visisted = False
+            last_visited_vertex.visited = False
             self.distance_traveled -= last_visited_vertex.compute_distance(twice_last_visited_vertex)
             self.vertices = self.vertices[:-1]
 
@@ -184,7 +248,7 @@ class Route(object):
                 self.edges = self.edges[:-1]
         elif len(self.vertices) == 1:
             last_visited_vertex = self.vertices[-1]
-            last_visited_vertex.visisted = False
+            last_visited_vertex.visited = False
             self.distance_traveled = 0
             self.vertices = None
         else:
@@ -220,6 +284,7 @@ class Route(object):
             # Get v1, v2
             edge_vertex1 = closest_item_to_next_vertex.vertices[0]
             edge_vertex2 = closest_item_to_next_vertex.vertices[1]
+            edge_v2_v3 = None
 
             # use v2's index to get v3
             edge_vertex2_index = np.where(self.vertices == edge_vertex2)[0]
@@ -255,6 +320,8 @@ class Route(object):
                     for edge in self.edges:
                         if edge.vertices[0].vertex_id == edge_vertex2.vertex_id and edge.vertices[1].vertex_id == v3.vertex_id:
                             edge_v2_v3 = edge
+                    if edge_v2_v3 is None:
+                        edge_v2_v3 = Edge(edge_vertex2, v3)
                     self.edges = self.edges[self.edges != edge_v2_v3]
                     self.distance_traveled -= edge_v2_v3.distance
                     edge_v0_v3 = Edge(vertex, v3)
@@ -370,7 +437,7 @@ class Graph(object):
 
     def reset_graph(self):
         for vertex in self.vertices:
-            vertex.visisted = False
+            vertex.visited = False
         self.edge_distances = None
         self.edges = np.array([])
 

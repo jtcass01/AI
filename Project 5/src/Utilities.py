@@ -161,6 +161,23 @@ class Math():
         else:
             return color_value
 
+    @staticmethod
+    def normalize_rgb(value, min_possible_value, max_possible_value):
+        output = int(255 - ((value - max_possible_value) * 255 / (min_possible_value - max_possible_value)))
+
+        if output < 0:
+            return "00"
+        elif output > 255:
+            return "FF"
+        else:
+            output = hex(output)[2:]
+
+            if len(output) == 1:
+                return "0" + output
+            else:
+                return output
+
+
 if __name__ == "__main__":
     line_point_1 = (-1, 1)
     line_point_2 = (1, 1)
