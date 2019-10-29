@@ -8,7 +8,7 @@ from copy import deepcopy
 from FileHandler import FileHandler
 from Graph import Route, Graph, Edge
 from Search import BreadthFirstSearchTree, DepthFirstSearchStack
-from WisdomOfCrowds import WisdomOfCrowds_GeneticAlgorithm
+from WisdomOfCrowds import WisdomOfCrowds_GeneticAlgorithm, CrowdSolution
 from GeneticAlgorithm import GeneticAlgorithm
 import numpy as np
 import matplotlib.pyplot as plt
