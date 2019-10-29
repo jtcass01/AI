@@ -118,7 +118,7 @@ class CrowdSolution(object):
                 vertex_start = self.graph.get_vertex_by_id(int(vertices[0]))
                 vertex_end = self.graph.get_vertex_by_id(int(vertices[1]))
                 edge_entry = CrowdSolution.EdgeEntry(edge_key=edge_key, edge_count=edge_count, edge=Edge(vertex_start, vertex_end))
-                self.add_edge_entry(edge_entry)
+                self.edge_dictionary[edge_entry.edge_key] = edge_entry
 
         self.display()
 
@@ -169,7 +169,23 @@ class CrowdSolution(object):
         # Update route to match current representation given superiority_tolerance
         for edge_key, edge_entry in self.edge_dictionary.items():
             if edge_entry.edge_count >= (self.max_edge_count * superiority_tolerance):
-                self.route.add_edge(edge_entry.edge)
+                better_edge = False
+                for edge_key_1, edge_entry_1 in self.edge_dictionary.items():
+                    # check if edges are the same
+                    if edge_key_1 == edge_key:
+                        pass
+                    # Check if vertex can be included in a different edge as a starter or finisher
+                    else:
+                        if edge_entry.edge.vertices[0].vertex_id == edge_entry_1.edge.vertices[0].vertex_id or edge_entry.edge.vertices[0].vertex_id == edge_entry_1.edge.vertices[0].vertex_id:
+
+                            if edge_entry.edge_count == edge_entry_1.edge_count:
+                                if edge_entry.edge.distance > edge_entry_1.edge.distance:
+                                    better_edge = True
+                            elif edge_entry.edge_count < edge_entry_1.edge_count:
+                                better_edge = True
+
+                            if not better_edge:
+                                self.route.add_edge(edge_entry.edge)
 
         def choose_next_vertex():
             closest_item_next_to_closest_vertex = None
