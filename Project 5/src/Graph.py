@@ -129,7 +129,7 @@ class Route(object):
                 return edge_index+1
             else:
                 # Edge can go anywhere
-                return -1
+                return self.find_next_open_edge_index(edge)
 
     def reorder(self):
         new_edges = None
@@ -144,7 +144,7 @@ class Route(object):
                 vertex_end = edge.vertices[1]
 
                 # Find if there is an ending matching this begining.
-                for edge_c in self.edges:
+                for edge_c in new_edges:
                     if edge_c == edge:
                         pass
                     else:
@@ -174,6 +174,42 @@ class Route(object):
                         return edge_index+1
 
         self.edges = deepcopy(new_edges)
+
+    def find_next_open_vertex_index(self, edge):
+        vertex_start = edge.vertices[0]
+        vertex_end = edge.vertices[1]
+
+        prev_vertex_1_start = None
+        prev_vertex_1_end = None
+        for edge_1_index, edge_1 in enumerate(self.edges):
+            vertex_1_start = edge_1.vertices[0]
+            vertex_1_end = edge_1.vertices[1]
+
+            if prev_vertex_1_start is not None:
+                if prev_vertex_1_end != vertex_1_start:
+                    return np.where(self.vertices == vertex_1_end)[0] + 1
+
+            prev_vertex_1_start = vertex_1_start
+            prev_vertex_1_end = vertex_1_end
+        return -1
+
+    def find_next_open_edge_index(self, edge):
+        vertex_start = edge.vertices[0]
+        vertex_end = edge.vertices[1]
+
+        prev_vertex_1_start = None
+        prev_vertex_1_end = None
+        for edge_1_index, edge_1 in enumerate(self.edges):
+            vertex_1_start = edge_1.vertices[0]
+            vertex_1_end = edge_1.vertices[1]
+
+            if prev_vertex_1_start is not None:
+                if prev_vertex_1_end != vertex_1_start:
+                    return edge_1_index + 1
+
+            prev_vertex_1_start = vertex_1_start
+            prev_vertex_1_end = vertex_1_end
+        return -1
 
     def add_edge(self, edge):
         vertex_start = self.graph.get_vertex_by_id(edge.vertices[0].vertex_id)
@@ -217,8 +253,13 @@ class Route(object):
             # neither vertex already present
             else:
                 print("Two new vertices adding to end")
-                self.vertices = np.append(self.vertices, vertex_start)
-                self.vertices = np.append(self.vertices, vertex_end)
+                insert_index = self.find_next_open_vertex_index(edge)
+                if insert_index > 0:
+                    self.vertices = np.insert(self.vertices, insert_index, vertex_end)
+                    self.vertices = np.insert(self.vertices, insert_index, vertex_start)
+                else:
+                    self.vertices = np.append(self.vertices, vertex_start)
+                    self.vertices = np.append(self.vertices, vertex_end)
                 # Mark the vertex as being visited
                 vertex_start.visited = True
                 vertex_end.visited = True
