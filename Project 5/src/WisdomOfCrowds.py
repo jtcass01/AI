@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 import os
 import datetime
@@ -120,7 +121,7 @@ class CrowdSolution(object):
                 edge_entry = CrowdSolution.EdgeEntry(edge_key=edge_key, edge_count=edge_count, edge=Edge(vertex_start, vertex_end))
                 self.edge_dictionary[edge_entry.edge_key] = edge_entry
 
-        self.display()
+#        self.display()
 
     def display(self):
         for edge_key, edge_entry in self.edge_dictionary.items():
@@ -165,27 +166,26 @@ class CrowdSolution(object):
 
     def complete_graph_greedy_heuristic(self, superiority_tolerance=0.8):
         self.route.reset_route()
+        starting_vertex = None
 
         # Update route to match current representation given superiority_tolerance
-        for edge_key, edge_entry in self.edge_dictionary.items():
-            if edge_entry.edge_count >= (self.max_edge_count * superiority_tolerance):
-                better_edge = False
-                for edge_key_1, edge_entry_1 in self.edge_dictionary.items():
-                    # check if edges are the same
-                    if edge_key_1 == edge_key:
-                        pass
-                    # Check if vertex can be included in a different edge as a starter or finisher
-                    else:
-                        if edge_entry.edge.vertices[0].vertex_id == edge_entry_1.edge.vertices[0].vertex_id or edge_entry.edge.vertices[0].vertex_id == edge_entry_1.edge.vertices[0].vertex_id:
+        superiority_edges = [(edge_key, edge_entry) for (edge_key, edge_entry) in self.edge_dictionary.items() if edge_entry.edge_count >= (self.max_edge_count * superiority_tolerance)]
 
-                            if edge_entry.edge_count == edge_entry_1.edge_count:
-                                if edge_entry.edge.distance > edge_entry_1.edge.distance:
-                                    better_edge = True
-                            elif edge_entry.edge_count < edge_entry_1.edge_count:
-                                better_edge = True
+        for edge_key, edge_entry in superiority_edges:
+            print(edge_entry)
+            better_edge = False
+            for edge_key_1, edge_entry_1 in superiority_edges:
+                if edge_entry.edge.vertices[0].vertex_id == edge_entry_1.edge.vertices[0].vertex_id or edge_entry.edge.vertices[0].vertex_id == edge_entry_1.edge.vertices[0].vertex_id:
+                    if edge_entry.edge_count == edge_entry_1.edge_count:
+                        if edge_entry.edge.distance > edge_entry_1.edge.distance:
+                            better_edge = True
+                    elif edge_entry.edge_count < edge_entry_1.edge_count:
+                        better_edge = True
 
-                            if not better_edge:
-                                self.route.add_edge(edge_entry.edge)
+            if not better_edge:
+                self.route.add_edge(edge_entry.edge)
+
+        print(self.route)
 
         def choose_next_vertex():
             closest_item_next_to_closest_vertex = None
@@ -237,6 +237,8 @@ class CrowdSolution(object):
             if missing_start is not None:
                 self.route.add_edge(Edge(missing_start, missing_end))
 
+        print(self.route)
+        self.route.plot()
         return self.route
 
     class EdgeEntry(object):
@@ -370,6 +372,6 @@ def WOC_start_to_finish(graph_location, log_location, epoch_threshold=25, superi
 
 
 if __name__ == "__main__":
-    WOC_load_test(graph_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp", \
+    WOC_load_and_complete_test(graph_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp", \
                   log_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "crowd_" + "Random44_" + datetime.datetime.now().isoformat()[:10] + "_0.csv",
-                  superiority_tolerance=0.0)
+                  superiority_tolerance=0.8)

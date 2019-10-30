@@ -118,22 +118,70 @@ class Route(object):
         new_edge_vertex_0 = edge.vertices[0]
         new_edge_vertex_1 = edge.vertices[1]
 
-        for edge_index, edge in enumerate(self.edges):
-            old_edge_vertex_0 = edge.vertices[0]
-            old_edge_vertex_1 = edge.vertices[1]
-            if new_edge_vertex_1 == old_edge_vertex_0:
+        for edge_index, c_edge in enumerate(self.edges):
+            old_edge_vertex_0 = c_edge.vertices[0]
+            old_edge_vertex_1 = c_edge.vertices[1]
+            if new_edge_vertex_1.vertex_id == old_edge_vertex_0.vertex_id:
                 # Edge needs to go in front of old edge
                 return edge_index
-            elif new_edge_vertex_0 == old_edge_vertex_1:
+            elif new_edge_vertex_0.vertex_id == old_edge_vertex_1.vertex_id:
                 # Edge needs to go in after old age
                 return edge_index+1
             else:
                 # Edge can go anywhere
                 return -1
 
+    def reorder(self):
+        new_edges = None
+
+        # Start at the end and interate backwards
+        for edge in reverse(self.edges):
+
+            if new_edges is None:
+                new_edges = np.array([edge])
+            else:
+                vertex_start = edge.vertices[0]
+                vertex_end = edge.vertices[1]
+
+                # Find if there is an ending matching this begining.
+                for edge_c in self.edges:
+                    if edge_c == edge:
+                        pass
+                    else:
+                        comparative_vertex_start = edge_c.vertices[0]
+                        comparative_vertex_end = edge_c.vertices[1]
+                        if edge_c.vertex_id == vertex_start.vertex_id:
+                            pass
+
+
+        for edge in self.edges:
+
+            if new_edges is None:
+                new_edges = np.array([edge])
+            else:
+                vertex_start = edge.vertices[0]
+                vertex_end = edge.vertices[1]
+
+                for comparative_edge in new_edges:
+                    comparative_vertex_start = comparative_edge.vertices[0]
+                    comparative_vertex_end = comparative_edge.vertices[1]
+
+                    if vertex_end == comparative_vertex_start:
+                        # Edge needs to go in front of old edge
+                        return edge_index
+                    elif vertex_start == comparative_vertex_end:
+                        # Edge needs to go in after old age
+                        return edge_index+1
+
+        self.edges = deepcopy(new_edges)
+
     def add_edge(self, edge):
         vertex_start = self.graph.get_vertex_by_id(edge.vertices[0].vertex_id)
         vertex_end = self.graph.get_vertex_by_id(edge.vertices[1].vertex_id)
+
+        print("")
+        print("adding edge", edge)
+        print(self)
 
         # Add the new vertex to the array of vertices
         if self.vertices is None:
@@ -142,30 +190,41 @@ class Route(object):
             # Add the starting vertex to the vertex_order
             self.vertices = np.array([vertex_start, vertex_end])
             # Mark the vertex as being visited
+            vertex_start.visited = True
+            vertex_end.visited = True
         else:
             vertex_start_index = np.where(self.vertices == vertex_start)[0]
-            vertex_stop_index = np.where(self.vertices == vertex_start)[0]
+            vertex_stop_index = np.where(self.vertices == vertex_end)[0]
+
+            print("vertex_start_index", vertex_start_index, type(vertex_start_index))
+            print("vertex_stop_index", vertex_stop_index, type(vertex_stop_index))
 
             # starting vertex already present
-            if vertex_start_index > -1 and vertex_stop_index < 0:
+            if vertex_start.visited and not vertex_end.visited:
+                print("Starting vertex already present. Inserting after @ ", vertex_start_index+1)
                 self.vertices = np.insert(self.vertices, vertex_start_index+1, vertex_end)
+                # Mark the vertex as being visited
+                vertex_end.visited = True
             # ending vertex already present
-            elif vertex_stop_index > -1 and vertex_start_index < 0:
+            elif not vertex_start.visited and vertex_end.visited:
+                print("Ending vertex already present. Inserting before @ ", vertex_stop_index)
                 self.vertices = np.insert(self.vertices, vertex_stop_index, vertex_start)
+                # Mark the vertex as being visited
+                vertex_start.visited = True
             # both vertices are already present.
-            elif vertex_stop_index > -1 and vertex_start_index > -1:
-                pass
+            elif vertex_start.visited and vertex_end.visited:
+                print("Both vertices already present")
             # neither vertex already present
             else:
+                print("Two new vertices adding to end")
                 self.vertices = np.append(self.vertices, vertex_start)
                 self.vertices = np.append(self.vertices, vertex_end)
+                # Mark the vertex as being visited
+                vertex_start.visited = True
+                vertex_end.visited = True
 
             # Find the distance between the goto vertex and the last vertex visited
             self.distance_traveled += edge.distance
-
-        # Mark the vertex as being visited
-        vertex_start.visited = True
-        vertex_end.visited = True
 
         # Add the new edge to the array of edges
         if self.edges is None:
