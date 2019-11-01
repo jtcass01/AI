@@ -172,7 +172,6 @@ class CrowdSolution(object):
         superiority_edges = [(edge_key, edge_entry) for (edge_key, edge_entry) in self.edge_dictionary.items() if edge_entry.edge_count >= (self.max_edge_count * superiority_tolerance)]
 
         for edge_key, edge_entry in superiority_edges:
-            print(edge_entry)
             better_edge = False
             for edge_key_1, edge_entry_1 in superiority_edges:
                 if edge_entry.edge.vertices[0].vertex_id == edge_entry_1.edge.vertices[0].vertex_id or edge_entry.edge.vertices[0].vertex_id == edge_entry_1.edge.vertices[0].vertex_id:
@@ -184,7 +183,7 @@ class CrowdSolution(object):
 
             if not better_edge:
                 self.route.add_edge(edge_entry.edge)
-
+        self.route.distance_traveled = self.route.recount_distance()
         print(self.route)
 
         def choose_next_vertex():
@@ -192,8 +191,9 @@ class CrowdSolution(object):
             r_type_of_closest_item = None
             closest_vertex = None
             closest_distance = None
+            starting_vertex = self.route.vertices[0]
 
-            for vertex in self.route.get_unvisited_vertices():
+            for vertex in self.route.get_vertices_not_in_route():
                 closest_item_next_to_vertex, item_distance = self.route.get_shortest_distance_to_route(vertex)
 
                 if closest_vertex is None:
@@ -211,31 +211,57 @@ class CrowdSolution(object):
             else:
                 return closest_vertex, closest_item_next_to_closest_vertex
 
-        while len(self.route.vertices) <= len(self.route.graph.vertices):
+        while len(self.route.vertices) < len(self.route.graph.vertices):
             next_vertex, closest_item_next_to_vertex = choose_next_vertex()
             self.route.lasso(next_vertex, closest_item_next_to_vertex)
 
+        print("Route after lassoing")
+        print(self.route)
+
         # ensure complete coverage
-        starting_vertices = list([])
+        last_visited_vertex = None
+        unvisited_vertices = list([])
         ending_vertices = list([])
-        missing_start = None
-        missing_end = None
-        for edge in self.route.edges:
-            starting_vertex, ending_vertex = edge.vertices
-            starting_vertices.append(starting_vertex.vertex_id)
-            ending_vertices.append(ending_vertex.vertex_id)
+        for vertex in self.route.vertices:
+            if not vertex.visited:
+                unvisited_vertices.append(vertex)
+                if last_visited_vertex is not None:
+                    ending_vertices.append(last_visited_vertex)
+            last_visited_vertex = vertex
+        ending_vertices.append(self.route.vertices[-1])
 
+        while len(unvisited_vertices) > 1:
+            shortest_distance = None
+            shortest_edge = None
 
-        if len(starting_vertices) == len(ending_vertices) == len(self.graph.vertices):
-            pass
-        else:
-            for vertex in self.graph.vertices:
-                if vertex.vertex_id not in starting_vertices:
-                    missing_start = vertex
-                if vertex.vertex_id not in ending_vertices:
-                    missing_end = vertex
-            if missing_start is not None:
-                self.route.add_edge(Edge(missing_start, missing_end))
+            for ending_vertex in ending_vertices:
+                for unvisited_vertex in unvisited_vertices:
+                    test_edge = Edge(ending_vertex, unvisited_vertex)
+                    print(test_edge)
+                    if shortest_edge is None:
+                        shortest_edge = test_edge
+                        shortest_distance = test_edge.distance
+                    else:
+                        if shortest_distance > test_edge.distance:
+                            shortest_edge = test_edge
+                            shortest_distance = test_edge.distance
+            print("Shortest Edge", shortest_edge)
+            self.route.add_edge(shortest_edge)
+
+            last_visited_vertex = None
+            unvisited_vertices = list([])
+            ending_vertices = list([])
+            for vertex in self.route.vertices:
+                if not vertex.visited:
+                    unvisited_vertices.append(vertex)
+                    if last_visited_vertex is not None:
+                        ending_vertices.append(last_visited_vertex)
+                last_visited_vertex = vertex
+            ending_vertices.append(self.route.vertices[-1])
+
+        print(self.route)
+        print("Cappin")
+        self.route.add_edge(Edge(self.route.vertices[-1], self.route.vertices[0]))
 
         print(self.route)
         self.route.plot()
