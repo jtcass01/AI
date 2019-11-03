@@ -26,18 +26,14 @@ def test_genetic_algorithm(relative_tsp_path, relative_tsp_graph_path):
 
 	os.system(system_call)
 
-class TSPTest(object):
-	def __init__():
-		pass
+def run_full_tests():
+	cwd = os.getcwd()
+	test_path = "\"" + cwd + os.path.sep + "Test.py" + "\""
 
-	def run():
-		pass
-
-	def log():
-		pass
-
-def genetic_algorithm_test():
-	pass
+	system_call = "python {}".format(test_path)
+	print(system_call)
+	os.system(system_call)
 
 if __name__ == "__main__":
-	test_genetic_algorithm("TravelingSalesman.py", ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp")
+	for epoch in range(15):
+		run_full_tests()

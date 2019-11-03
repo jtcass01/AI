@@ -65,6 +65,8 @@ class GeneticAlgorithm(object):
 
             self.costs.append(self.best_chromosome.route.distance_traveled)
 
+        self.best_chromosome.route.recount_distance()
+
         return self.best_chromosome.route
 
     def display_result(self):
@@ -349,7 +351,7 @@ def mutation_test():
 
 def traveling_salesman_solution_test():
     # Read in test data
-    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp"))
+    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random11.tsp"))
     # calculate edges
     graph.build_graph()
 

@@ -1,4 +1,3 @@
-
 #!/usr/bin/python
 import os
 import datetime
@@ -264,7 +263,7 @@ class CrowdSolution(object):
 
 #        print("route after recombination")
 #        print(self.route)
-        self.route.plot()
+#        self.route.plot()
 #        print("Returning")
         return self.route
 
@@ -401,6 +400,6 @@ def WOC_start_to_finish(graph_location, log_location, epoch_threshold=25, superi
 
 
 if __name__ == "__main__":
-    WOC_load_and_complete_test(graph_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp", \
+    WOC_start_to_finish(graph_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp", \
                   log_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "crowd_" + "Random44_" + datetime.datetime.now().isoformat()[:10] + "_0.csv",
                   superiority_tolerance=0.9)

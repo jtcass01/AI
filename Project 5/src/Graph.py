@@ -345,13 +345,12 @@ class Route(object):
             edge_vertex1 = closest_item_to_next_vertex.vertices[0]
             edge_vertex2 = closest_item_to_next_vertex.vertices[1]
             edge_v2_v3 = None
+            v3 = None
 
             # use v2's index to get v3
             edge_vertex2_index = np.where(self.vertices == edge_vertex2)[0]
             if edge_vertex2_index < len(self.vertices) - 1:
                 v3 = self.vertices[edge_vertex2_index+1][0]
-                if not v3.visited:
-                    v3 = None
 
             # Calculate different edge distances.
             v1_v2 = closest_item_to_next_vertex.distance
