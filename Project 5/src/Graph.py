@@ -123,9 +123,51 @@ class Route(object):
     def get_vertices_not_in_route(self):
         return [vertex for vertex in self.graph.vertices if vertex not in self.vertices]
 
+    def greedy_recombine(self):
+        vertex_start = self.edges[0].vertices[0]
+        vertex_end = self.edges[0].vertices[1]
+        new_edges = np.array([self.edges[0]])
+        new_vertices = np.array([vertex_start, vertex_end])
+
+        remaining_edge_starts = [edge for edge in self.edges if not np.isin(edge,new_edges) and not edge.vertices[0].visited]
+
+#        print("Performing greedy recombine")
+#        print("remaining_edge_starts")
+#        for edge in remaining_edge_starts:
+#            print(edge)
+
+        while len(remaining_edge_starts) > 0:
+#            print("vertex_start", vertex_start)
+#            print("vertex_end", vertex_end)
+            edge_matching_end_vertex = self.get_edge_by_vertex_id(vertex_end.vertex_id, 0)
+#            print("edge_matching_end_vertex", edge_matching_end_vertex)
+            while edge_matching_end_vertex is not None:
+#                print("appending edge", edge_matching_end_vertex)
+                new_edges = np.append(new_edges, [edge_matching_end_vertex])
+                vertex_start = edge_matching_end_vertex.vertices[0]
+                vertex_end = edge_matching_end_vertex.vertices[1]
+                edge_matching_end_vertex = self.get_edge_by_vertex_id(vertex_end.vertex_id, 0)
+
+            remaining_edge_starts = [edge for edge in self.edges if not np.isin(edge,new_edges) and not edge.vertices[0].visited]
+#            print("remaining_edge_starts")
+#            for edge in remaining_edge_starts:
+#                print(edge)
+            if len(remaining_edge_starts) > 0:
+                new_edges = np.append(new_edges, [Edge(vertex_end, remaining_edge_starts[0].vertices[0])])
+                vertex_start = remaining_edge_starts[0].vertices[0]
+                vertex_end = remaining_edge_starts[0].vertices[0]
+
+#        print("new_edges")
+
+        self.reset_route()
+        for edge in new_edges:
+            self.goto(edge.vertices[0])
+        self.goto(new_edges[0].vertices[0])
+
+
     def add_edge(self, edge):
-        print("adding edge", edge)
-        print(self)
+#        print("adding edge", edge)
+#        print(self)
         vertex_start = self.graph.get_vertex_by_id(edge.vertices[0].vertex_id)
         vertex_end = self.graph.get_vertex_by_id(edge.vertices[1].vertex_id)
 
@@ -135,25 +177,25 @@ class Route(object):
             vertex_end.visited = True
         else:
             if not vertex_start.visited and not vertex_end.visited:
-                print("Two freshies")
+#                print("Two freshies")
                 self.edges = np.insert(self.edges, 0, edge)
                 vertex_end.visited = True
             elif np.any(np.isin(self.vertices, vertex_start)) and np.any(np.isin(self.vertices, vertex_end)):
-                print("Two Seniors")
+#                print("Two Seniors")
                 if len(self.get_unvisited_vertices()) == 1:
                     self.edges = np.append(self.edges, [edge])
                     edge.vertices[0].visited = True
                 else:
                     while True:
                         edge_matching_end_vertex = self.get_edge_by_vertex_id(vertex_end.vertex_id, 0)
-                        print("edge_matching_end_vertex", edge_matching_end_vertex)
+#                        print("edge_matching_end_vertex", edge_matching_end_vertex)
                         edge_matching_end_vertex.vertices[0].visited = True
                         new_edge_index = np.where(self.edges == edge_matching_end_vertex)[0]
                         self.edges = np.insert(self.edges, new_edge_index, edge)
 
                         if len(self.edges) < len(self.graph.vertices) - 1:
                             edge_matching_starting_vertex = self.get_edge_by_vertex_id(vertex_start.vertex_id, 1)
-                            print("edge_matching_starting_vertex", edge_matching_starting_vertex)
+#                            print("edge_matching_starting_vertex", edge_matching_starting_vertex)
                         else:
                             break
 
@@ -165,7 +207,7 @@ class Route(object):
                         else:
                             break
             else:
-                print("One of Each")
+#                print("One of Each")
                 for edge_index, c_edge in enumerate(self.edges):
                     old_edge_vertex_0 = c_edge.vertices[0]
                     old_edge_vertex_1 = c_edge.vertices[1]
@@ -295,9 +337,9 @@ class Route(object):
             return edge
 
     def lasso(self, vertex, closest_item_to_next_vertex):
-        print("vertex", str(vertex), type(vertex))
-        print("closest_item_to_next_vertex", str(closest_item_to_next_vertex), type(closest_item_to_next_vertex))
-        print(self)
+#        print("vertex", str(vertex), type(vertex))
+#        print("closest_item_to_next_vertex", str(closest_item_to_next_vertex), type(closest_item_to_next_vertex))
+#        print(self)
         if isinstance(closest_item_to_next_vertex, Edge):
             # Get v1, v2
             edge_vertex1 = closest_item_to_next_vertex.vertices[0]
