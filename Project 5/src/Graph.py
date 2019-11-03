@@ -125,6 +125,7 @@ class Route(object):
 
     def add_edge(self, edge):
         print("adding edge", edge)
+        print(self)
         vertex_start = self.graph.get_vertex_by_id(edge.vertices[0].vertex_id)
         vertex_end = self.graph.get_vertex_by_id(edge.vertices[1].vertex_id)
 
@@ -134,22 +135,25 @@ class Route(object):
             vertex_end.visited = True
         else:
             if not vertex_start.visited and not vertex_end.visited:
+                print("Two freshies")
                 self.edges = np.insert(self.edges, 0, edge)
                 vertex_end.visited = True
             elif np.any(np.isin(self.vertices, vertex_start)) and np.any(np.isin(self.vertices, vertex_end)):
+                print("Two Seniors")
                 if len(self.get_unvisited_vertices()) == 1:
                     self.edges = np.append(self.edges, [edge])
                     edge.vertices[0].visited = True
                 else:
                     while True:
-
                         edge_matching_end_vertex = self.get_edge_by_vertex_id(vertex_end.vertex_id, 0)
+                        print("edge_matching_end_vertex", edge_matching_end_vertex)
                         edge_matching_end_vertex.vertices[0].visited = True
                         new_edge_index = np.where(self.edges == edge_matching_end_vertex)[0]
                         self.edges = np.insert(self.edges, new_edge_index, edge)
 
-                        if len(self.edges) == len(self.graph.vertices) - 1:
+                        if len(self.edges) < len(self.graph.vertices) - 1:
                             edge_matching_starting_vertex = self.get_edge_by_vertex_id(vertex_start.vertex_id, 1)
+                            print("edge_matching_starting_vertex", edge_matching_starting_vertex)
                         else:
                             break
 
@@ -161,6 +165,7 @@ class Route(object):
                         else:
                             break
             else:
+                print("One of Each")
                 for edge_index, c_edge in enumerate(self.edges):
                     old_edge_vertex_0 = c_edge.vertices[0]
                     old_edge_vertex_1 = c_edge.vertices[1]
@@ -290,9 +295,9 @@ class Route(object):
             return edge
 
     def lasso(self, vertex, closest_item_to_next_vertex):
-#        print("vertex", str(vertex), type(vertex))
-#        print("closest_item_to_next_vertex", str(closest_item_to_next_vertex), type(closest_item_to_next_vertex))
-#        print(self)
+        print("vertex", str(vertex), type(vertex))
+        print("closest_item_to_next_vertex", str(closest_item_to_next_vertex), type(closest_item_to_next_vertex))
+        print(self)
         if isinstance(closest_item_to_next_vertex, Edge):
             # Get v1, v2
             edge_vertex1 = closest_item_to_next_vertex.vertices[0]
@@ -303,10 +308,14 @@ class Route(object):
             edge_vertex2_index = np.where(self.vertices == edge_vertex2)[0]
             if edge_vertex2_index < len(self.vertices) - 1:
                 v3 = self.vertices[edge_vertex2_index+1][0]
+                if not v3.visited:
+                    v3 = None
 
             # Calculate different edge distances.
             v1_v2 = closest_item_to_next_vertex.distance
-            if edge_vertex2_index < len(self.vertices) - 2:
+            if edge_vertex2_index < len(self.vertices) - 2 and v3 is not None:
+                ## NEED TO TAKE CARE OF THE CASE WHEN V3 has not been visisted.
+
                 v1_v2_v0_v3 = v1_v2 + Math.calculate_distance_from_point_to_point(edge_vertex2.get_location(), vertex.get_location()) + \
                                                                                   Math.calculate_distance_from_point_to_point(vertex.get_location(), v3.get_location())
                 v1_v0_v2_v3 = Math.calculate_distance_from_point_to_point(edge_vertex1.get_location(), vertex.get_location()) + \
@@ -328,18 +337,19 @@ class Route(object):
                 edge_v1_v2_index = np.where(self.edges == edge_v1_v2)[0]
                 new_edge_location = edge_v1_v2_index + 1
 
-                # create edge v0_v3 and insert it.  Remove edge v2_v3
-                if new_vertex_location < len(self.vertices)-1:
-                    for edge in self.edges:
-                        if edge.vertices[0].vertex_id == edge_vertex2.vertex_id and edge.vertices[1].vertex_id == v3.vertex_id:
-                            edge_v2_v3 = edge
-                    if edge_v2_v3 is None:
-                        edge_v2_v3 = Edge(edge_vertex2, v3)
-                    self.edges = self.edges[self.edges != edge_v2_v3]
-                    self.distance_traveled -= edge_v2_v3.distance
-                    edge_v0_v3 = Edge(vertex, v3)
-                    self.edges = np.insert(self.edges, new_edge_location, edge_v0_v3)
-                    self.distance_traveled += edge_v0_v3.distance
+                if v3 is not None:
+                    # create edge v0_v3 and insert it.  Remove edge v2_v3
+                    if new_vertex_location < len(self.vertices)-1:
+                        for edge in self.edges:
+                            if edge.vertices[0].vertex_id == edge_vertex2.vertex_id and edge.vertices[1].vertex_id == v3.vertex_id:
+                                edge_v2_v3 = edge
+                        if edge_v2_v3 is None:
+                            edge_v2_v3 = Edge(edge_vertex2, v3)
+                        self.edges = self.edges[self.edges != edge_v2_v3]
+                        self.distance_traveled -= edge_v2_v3.distance
+                        edge_v0_v3 = Edge(vertex, v3)
+                        self.edges = np.insert(self.edges, new_edge_location, edge_v0_v3)
+                        self.distance_traveled += edge_v0_v3.distance
 
                 # create edge v2_v0 and insert it
                 edge_v2_v0 = Edge(edge_vertex2, vertex)
