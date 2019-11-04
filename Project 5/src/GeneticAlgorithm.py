@@ -351,11 +351,11 @@ def mutation_test():
 
 def traveling_salesman_solution_test():
     # Read in test data
-    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random11.tsp"))
+    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random22.tsp"))
     # calculate edges
     graph.build_graph()
 
-    test_algorithm = GeneticAlgorithm(graph=graph, population_size=50, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=30, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+    test_algorithm = GeneticAlgorithm(graph=graph, population_size=50, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=30, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
     test_algorithm.run()
     test_algorithm.display_result()
 

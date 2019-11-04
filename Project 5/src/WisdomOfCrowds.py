@@ -204,7 +204,6 @@ class CrowdSolution(object):
         # Update route to match current representation given superiority_tolerance
         superiority_edges = [(edge_key, edge_entry) for (edge_key, edge_entry) in self.edge_dictionary.items() if edge_entry.edge_count >= (self.max_edge_count * superiority_tolerance)]
 
-#        print("Loading graph by superiority_tolerance")
         for edge_key, edge_entry in superiority_edges:
             better_edge = False
             for edge_key_1, edge_entry_1 in superiority_edges:
@@ -222,9 +221,6 @@ class CrowdSolution(object):
                     if not self.edge_create_circular_path(edge_entry.edge):
                         self.route.add_edge(edge_entry.edge)
         self.route.distance_traveled = self.route.recount_distance()
-#        print("Route before Greedy Heuristic")
-#        print(self.route)
-#        self.route.plot()
 
         def choose_next_vertex():
             closest_item_next_to_closest_vertex = None
@@ -255,16 +251,8 @@ class CrowdSolution(object):
             next_vertex, closest_item_next_to_vertex = choose_next_vertex()
             self.route.lasso(next_vertex, closest_item_next_to_vertex)
 
-#        print("Route after lassoing")
-#        print(self.route)
-#        self.route.plot()
-
         self.route.greedy_recombine()
 
-#        print("route after recombination")
-#        print(self.route)
-#        self.route.plot()
-#        print("Returning")
         return self.route
 
     class EdgeEntry(object):
@@ -400,6 +388,6 @@ def WOC_start_to_finish(graph_location, log_location, epoch_threshold=25, superi
 
 
 if __name__ == "__main__":
-    WOC_start_to_finish(graph_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp", \
+    WOC_load_test(graph_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp", \
                   log_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "crowd_" + "Random44_" + datetime.datetime.now().isoformat()[:10] + "_0.csv",
-                  superiority_tolerance=0.9)
+                  superiority_tolerance=0.2)

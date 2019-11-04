@@ -126,7 +126,7 @@ class TSPGATest(object):
 
 
 if __name__ == "__main__":
-    tsp_file_endings = ["Random11", "Random22", "Random44", "Random77", "Random97", "Random222"]
+    tsp_file_endings = ["Random77", "Random97", "Random222"]
 
     for tsp_file_ending in tsp_file_endings:
         test_log_path = os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "TEST_RESULTS_" + tsp_file_ending + "_" + datetime.datetime.now().isoformat()[:10] + "_0.csv"

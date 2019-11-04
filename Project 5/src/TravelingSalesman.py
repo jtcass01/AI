@@ -554,7 +554,7 @@ if __name__ == "__main__":
         elif algorithm == "genetic":
             start = time.time()
 
-            result = TravelingSalesman.GeneticAlgorithm(graph, 100, 0.6, 0.02).run(cross_over_every_other=True)
+            result = GeneticAlgorithm(graph, population_size=50, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=25, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION).run()
 
             end = time.time()
             print("genetic solution", str(result), result.recount_distance())
@@ -565,7 +565,7 @@ if __name__ == "__main__":
             start = time.time()
 
             epoch_threshold = 25
-            superiority_tolerance=0.65
+            superiority_tolerance=0.2
             algorithm_population_size = 50
 
             uniform_twors = GeneticAlgorithm(graph, population_size=algorithm_population_size, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
