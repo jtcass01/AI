@@ -249,19 +249,19 @@ class GeneticAlgorithm(object):
             self.route.walk_complete_path(new_path)
 
         def __eq__(self, other):
-            return self.route == other.route
+            return self.route.distance_traveled == other.route.distance_traveled
 
         def __lt__(self, other):
-            return self.route < other.route
+            return self.route.distance_traveled < other.route.distance_traveled
 
         def __le__(self, other):
-            return self.route <= other.route
+            return self.route.distance_traveled <= other.route.distance_traveled
 
         def __gt__(self, other):
-            return self.route > other.route
+            return self.route.distance_traveled > other.route.distance_traveled
 
         def __ge__(self, other):
-            return self.route >= other.route
+            return self.route.distance_traveled >= other.route.distance_traveled
 
         class CrossoverMethods(Enum):
             INVALID = 0
@@ -349,16 +349,15 @@ def mutation_test():
 
     print(test_chromosome.route)
 
-def traveling_salesman_solution_test():
+def slope_number_test():
     # Read in test data
     graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random22.tsp"))
     # calculate edges
     graph.build_graph()
 
     test_algorithm = GeneticAlgorithm(graph=graph, population_size=50, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=30, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-    test_algorithm.run()
-    test_algorithm.display_result()
-
+#    test_algorithm.run()
+#    test_algorithm.display_result()
 
 if __name__ == "__main__":
-    traveling_salesman_solution_test()
+    slope_number_test()
