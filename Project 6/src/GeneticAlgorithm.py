@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import random
@@ -25,17 +26,24 @@ class GeneticAlgorithm(object):
         self.initialize_population()
 
     def initialize_population(self):
-        city_range = list(range(1, 1 + len(self.graph.vertices)))
+        states = [1, 0]
+        connection_dictionary = {}
 
         for chromosome_index in range(self.population_size):
-            random_city_order = deepcopy(city_range, memo={})
-            random.shuffle(random_city_order)
+            for row_index in range(1, len(self.graph.vertices)+1):
+                connection_dictionary[str(row_index)] = random.sample(states*len(self.graph.vertices), len(self.graph.vertices))
+                # Assert there are no self connections.
+                connection_dictionary[str(row_index)][row_index-1] = 0
+
+            dataframe = pd.DataFrame.from_dict(connection_dictionary, orient='index', columns=list(range(1, len(self.graph.vertices)+1)))
             random_route = Route(self.graph)
-            random_route.walk_complete_path(random_city_order)
-            chromosome = GeneticAlgorithm.Chromosome(chromosome_index, random_route, crossover_method=self.crossover_method, mutation_method=self.mutation_method)
+            random_route.load_edge_dataframe(dataframe)
+            chromosome = GeneticAlgorithm.Chromosome(chromosome_index, route=random_route, allele_dataframe=dataframe, crossover_method=self.crossover_method, mutation_method=self.mutation_method)
             self.population.append(chromosome)
 
         self.population = np.array(self.population)
+
+        self.population[0].retrieve_alleles()
 
     def run(self):
         improvement = 0
@@ -107,14 +115,15 @@ class GeneticAlgorithm(object):
         self.population[chromosome_id] = new_chromosome
 
     class Chromosome(object):
-        def __init__(self, chromosome_id, route, crossover_method, mutation_method):
+        def __init__(self, chromosome_id, route, allele_dataframe, crossover_method, mutation_method):
             self.chromosome_id = chromosome_id
             self.route = route
+            self.allele_dataframe = allele_dataframe
             self.crossover_method = crossover_method
             self.mutation_method = mutation_method
 
         def __str__(self):
-            return "Chromosome #"  + str(self.chromosome_id) + " | " + str(self.route.distance_traveled)
+            return "Chromosome #"  + str(self.chromosome_id) + " | Slope #" + str(self.route.slope_number)
 
         def display_vertex_ids(self):
             string = "["
@@ -122,6 +131,36 @@ class GeneticAlgorithm(object):
                 string += str(vertex.vertex_id) + ", "
 
             print(string[:-2] + "]")
+
+        def retrieve_alleles(self):
+            alleles = None
+
+            print(self.allele_dataframe)
+
+            for row_index, row in self.allele_dataframe.iterrows():
+                if alleles is None:
+                    alleles = np.array(list(row[:int(row_index)-1]))
+                    alleles = np.concatenate((alleles, list(row[int(row_index):])), axis=None)
+                else:
+                    alleles = np.concatenate((alleles, list(row[:int(row_index)-1])), axis=None)
+                    alleles = np.concatenate((alleles, list(row[int(row_index):])), axis=None)
+
+            print(", ".join([str(allele) for allele in alleles]))
+
+            self.update_allele_dataframe()
+            print(self.allele_dataframe)
+
+            return alleles
+
+        def update_allele_dataframe(self, alleles = [0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]):
+            allele_index = 0
+
+            for row_index, row in self.allele_dataframe.iterrows():
+                for column_index, connection_boolean in enumerate(row):
+                    if int(row_index) != column_index+1:
+                        print(self.allele_dataframe[row_index])
+                        self.allele_dataframe[row_index][str(column_index)+1] = alleles[allele_index]
+                        allele_index += 1
 
         def crossover(self, other_chromosome):
             new_path = list([])
@@ -351,9 +390,7 @@ def mutation_test():
 
 def slope_number_test():
     # Read in test data
-    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random22.tsp"))
-    # calculate edges
-    graph.build_graph()
+    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "datasets" + os.path.sep + "Random22.tsp"))
 
     test_algorithm = GeneticAlgorithm(graph=graph, population_size=50, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=30, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
 #    test_algorithm.run()
