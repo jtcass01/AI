@@ -30,17 +30,14 @@ class WisdomOfCrowds_GeneticAlgorithm():
         self.depot_location = depot_location
         self.customers = customers
 
-        print("Generating Genetic Algorithm Threads...")
         for genetic_algorithm in self.genetic_algorithms:
             genetic_algorithm.initialize_population(depot_location, customers)
             self.threads.append(threading.Thread(target=genetic_algorithm.run, args=()))
 
     def run(self):
-        print("Starting Genetic Algorithm Threads...")
         for genetic_algorithm_thread in self.threads:
             genetic_algorithm_thread.start()
 
-        print("Waiting for Genetic Algorithm Threads to join...")
         for genetic_algorithm_thread in self.threads:
             genetic_algorithm_thread.join()
 
