@@ -64,12 +64,29 @@ class FileHandler():
             os.makedirs(purposed_path)
 
     @staticmethod
+    def start_test(test_log_location, data_labels):
+        header = "name,result,run_time"
+        for data_label in data_labels:
+            header +="," +  data_label
+
+        if not os.path.isfile(test_log_location):
+            with open(test_log_location, "w+") as test_log:
+                test_log.write(header + "\n")
+
+    @staticmethod
+    def log_test(test_log_location, test_name, test_result, test_runtime, test_data):
+        log_entry = test_name + "," + str(test_result) + "," + str(test_runtime)
+
+        for data in test_data:
+            log_entry += "," + str(data)
+
+        with open(test_log_location, "a+") as test_log:
+            test_log.write(log_entry + "\n")
+
+    @staticmethod
     def log_route(route, route_log_path):
-        route_log = open(route_log_path, "a+")
-
-        route_log.write(str(route) + "\n")
-
-        route_log.close()
+        with open(route_log_path, "a+") as route_log:
+            route_log.write(str(route) + "\n")
 
     @staticmethod
     def find_minimum_route(route_log_path):

@@ -8,36 +8,62 @@ from copy import deepcopy
 
 from FileHandler import FileHandler
 from Graph import Route, Graph, Edge
-from GeneticAlgorithm import GeneticAlgorithm
+from GeneticAlgorithm import VRP_GeneticAlgorithm
 from Utilities import Math
 
 class WisdomOfCrowds_GeneticAlgorithm():
     def __init__(self, genetic_algorithms, weights, log_location):
         assert len(genetic_algorithms) ==  len(weights)
         self.genetic_algorithms = genetic_algorithms
+        self.threads = list([])
         self.weights = weights
         self.log_location = log_location
+        self.depot_location = None
+        self.customers = None
         self.crowd = list([])
         self.crowd_solution = CrowdSolution(self.genetic_algorithms[0].graph)
 
-    def run(self):
-        genetic_algorithm_threads = list([])
+    def __str__(self):
+        return "WisdomOfCrowds_GeneticAlgorithm|" + str([str(genetic_algorithm) + "|" for genetic_algorithm in self.genetic_algorithms])
+
+    def initialize_population(self, depot_location, customers):
+        self.depot_location = depot_location
+        self.customers = customers
+
+        print(self.customers)
 
         print("Generating Genetic Algorithm Threads...")
         for genetic_algorithm in self.genetic_algorithms:
-            genetic_algorithm_threads.append(threading.Thread(target=genetic_algorithm.run(), args=None))
+            genetic_algorithm.initialize_population(depot_location, customers)
+            self.threads.append(threading.Thread(target=genetic_algorithm.run, args=()))
 
+    def run(self):
         print("Starting Genetic Algorithm Threads...")
-        for genetic_algorithm_thread in genetic_algorithm_threads:
+        for genetic_algorithm_thread in self.threads:
             genetic_algorithm_thread.start()
 
         print("Waiting for Genetic Algorithm Threads to join...")
-        for genetic_algorithm_thread in genetic_algorithm_threads:
+        for genetic_algorithm_thread in self.threads:
             genetic_algorithm_thread.join()
 
         self.retrieve_crowd()
         self.generate_crowd_solution()
         self.crowd_solution.log(self.log_location)
+        del self.crowd_solution
+        self.crowd_solution = CrowdSolution(self.genetic_algorithms[0].graph)
+        self.crowd_solution.load(self.log_location)
+        self.crowd_solution.display()
+        self.crowd_solution.complete_graph_greedy_heuristic(self.depot_location, self.customers, superiority_tolerance=0.1)
+        print("after greedy")
+        self.crowd_solution.display()
+
+    def get_cost(self):
+        self.crowd_solution.route.plot()
+        return self.crowd_solution.route.recount_distance()
+
+    def display_result(self):
+        print(self.crowd_solution.route)
+        self.crowd_solution.route.plot()
 
     def retrieve_crowd(self):
         for weight, algorithm in zip(self.weights, self.genetic_algorithms):
@@ -170,7 +196,12 @@ class CrowdSolution(object):
 
         return False
 
-    def complete_graph_greedy_heuristic(self, superiority_tolerance=0.8):
+    def complete_graph_greedy_heuristic(self, depot_location, customers, superiority_tolerance=0.8):
+        vertices = list([depot_location])
+
+        for customer in customers:
+            vertices.append(customer)
+
         self.route.reset_route()
         starting_vertex = None
 
@@ -201,8 +232,9 @@ class CrowdSolution(object):
             closest_vertex = None
             closest_distance = None
             starting_vertex = self.route.vertices[0]
+            remaining_vertices = [vertex for vertex in vertices if vertex not in self.route.vertices]
 
-            for vertex in self.route.get_vertices_not_in_route():
+            for vertex in remaining_vertices:
                 closest_item_next_to_vertex, item_distance = self.route.get_shortest_distance_to_route(vertex)
 
                 if closest_vertex is None:
@@ -215,12 +247,12 @@ class CrowdSolution(object):
                         closest_vertex = vertex
                         closest_item_next_to_closest_vertex = closest_item_next_to_vertex
 
-            if len(self.route.get_unvisited_vertices()) == 0:
-                return self.route.vertices[0], self.route.vertices[1]
+            if len(remaining_vertices) == 0:
+                return self.route.vertices[0], self.route.vertices[-1]
             else:
                 return closest_vertex, closest_item_next_to_closest_vertex
 
-        while len(self.route.vertices) < len(self.route.graph.vertices):
+        while len(self.route.vertices) < len(vertices):
             next_vertex, closest_item_next_to_vertex = choose_next_vertex()
             self.route.lasso(next_vertex, closest_item_next_to_vertex)
 
@@ -262,12 +294,12 @@ def WisdomOfCrowds_GeneticAlgorithm_test(graph_location, log_location, epoch_thr
     # calculate edges
     graph.build_graph()
 
-    uniform_twors = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-    uniform_rsm = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
-    partially_mapped_twors = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-    partially_mapped_rms = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
-    ordered_crossover_twors = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-    ordered_crossover_rsm = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+    uniform_twors = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
+    uniform_rsm = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+    partially_mapped_twors = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
+    partially_mapped_rms = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+    ordered_crossover_twors = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
+    ordered_crossover_rsm = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
 
     algorithms = [uniform_twors, uniform_rsm, partially_mapped_twors, partially_mapped_rms, ordered_crossover_twors, ordered_crossover_rsm]
 
@@ -323,12 +355,12 @@ def WOC_start_to_finish(graph_location, log_location, epoch_threshold=25, superi
     # calculate edges
     graph.build_graph()
 
-    uniform_twors = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-    uniform_rsm = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
-    partially_mapped_twors = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-    partially_mapped_rms = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
-    ordered_crossover_twors = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-    ordered_crossover_rsm = GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+    uniform_twors = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.UNIFORM, mutation_method=closest_distance.Chromosome.MutationMethods.TWORS)
+    uniform_rsm = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.UNIFORM, mutation_method=closest_distance.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+    partially_mapped_twors = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=closest_distance.Chromosome.MutationMethods.TWORS)
+    partially_mapped_rms = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=closest_distance.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
+    ordered_crossover_twors = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=closest_distance.Chromosome.MutationMethods.TWORS)
+    ordered_crossover_rsm = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=closest_distance.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
 
     algorithms = [uniform_twors, uniform_rsm, partially_mapped_twors, partially_mapped_rms, ordered_crossover_twors, ordered_crossover_rsm]
 

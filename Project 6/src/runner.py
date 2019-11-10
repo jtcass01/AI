@@ -1,57 +1,26 @@
 import os
-
-def test_display(relative_display_path, relative_tsp_graph_path):
-	cwd = os.getcwd()
-
-	display_path = "\"" + cwd + relative_display_path + "\""
-
-	tsp_graph_path = relative_tsp_graph_path
-
-	system_call = "python {} {}".format(display_path, tsp_graph_path)
-
-	print(system_call)
-
-	os.system(system_call)
-
-def test_genetic_algorithm(relative_tsp_path, relative_tsp_graph_path):
-	cwd = os.getcwd()
-
-	tsp_path = "\"" + cwd + os.path.sep + relative_tsp_path + "\""
-
-	tsp_graph_path = relative_tsp_graph_path
-
-	print("relative_tsp_graph_path",relative_tsp_graph_path)
-
-	system_call = "python {} {} {}".format(tsp_path, "genetic", relative_tsp_graph_path)
-
-	print(system_call)
-
-	os.system(system_call)
-
-def test_woc_algorithm(relative_tsp_path, relative_tsp_graph_path):
-	cwd = os.getcwd()
-
-	tsp_path = "\"" + cwd + os.path.sep + relative_tsp_path + "\""
-
-	tsp_graph_path = relative_tsp_graph_path
-
-	print("relative_tsp_graph_path",relative_tsp_graph_path)
-
-	system_call = "python {} {} {}".format(tsp_path, "woc", relative_tsp_graph_path)
-
-	print(system_call)
-
-	os.system(system_call)
+import datetime
+import itertools
 
 def run_full_tests():
-	cwd = os.getcwd()
-	test_path = "\"" + cwd + os.path.sep + "Test.py" + "\""
+	datasets = list(["Random6", "Random7", "Random8", "Random11", "Random22", "Random44", "Random77", "Random97", "Random222"])
+	dataset_sizes = list([6, 7, 8, 11, 22, 44, 77, 97, 222])
+	assert len(datasets) == len(dataset_sizes)
 
-	system_call = "python {}".format(test_path)
-	print(system_call)
-	os.system(system_call)
+	for dataset, dataset_size in zip(datasets, dataset_sizes):
+		population_sizes_per_genetic_algorithm = [5, 10, 25, 50, 75]
+		epoch_thresholds = [10, 25, 50, 75, 100]
+		crossover_probabilities = [0.2, 0.4, 0.6, 0.8]
+		mutation_probabilities = [0.01, 0.1, 0.25, 0.5]
+		number_of_depots_possibilities = list(range(1, dataset_size))
+		number_of_customers_possibilities = list(range(int(dataset_size/2), dataset_size-1))
+		pop_epoch_crossover_mutation = list(itertools.product(population_sizes_per_genetic_algorithm, epoch_thresholds, crossover_probabilities, mutation_probabilities, number_of_depots_possibilities, number_of_customers_possibilities))
+
+		for population_size_per_genetic_algorithm, epoch_threshold, crossover_probability, mutation_probability, number_of_depots, number_of_customers in pop_epoch_crossover_mutation:
+			system_call = "python VehicleRoutingProblem.py {} {} {} {} {} {} {}".format(dataset, population_size_per_genetic_algorithm, epoch_threshold, crossover_probability, mutation_probability, number_of_depots, number_of_customers)
+			print(system_call)
+			os.system(system_call)
+
 
 if __name__ == "__main__":
-	test_woc_algorithm(relative_tsp_path="TravelingSalesman.py", relative_tsp_graph_path=os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random44.tsp")
-#	for epoch in range(15):
-#		run_full_tests()
+	run_full_tests()

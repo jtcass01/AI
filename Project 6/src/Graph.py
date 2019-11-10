@@ -261,9 +261,9 @@ class Route(object):
             arrow_label = "Edge {}->{}".format(vertex.vertex_id, adjacent_vertex.vertex_id)
             arrow_plot = plt.arrow(vertex.x, vertex.y, adjacent_vertex.x-vertex.x, adjacent_vertex.y-vertex.y,
                                    head_width=1, head_length=1,
-                                   color='#{}{}{}'.format(Math.color_quantization(vertex.vertex_id, len(self.graph.vertices)),
-                                                          Math.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.graph.vertices)),
-                                                          Math.color_quantization(adjacent_vertex.vertex_id, len(self.graph.vertices))),
+                                   color='#{}{}{}'.format(Math.color_quantization(vertex.vertex_id, len(self.vertices)),
+                                                          Math.color_quantization(vertex.vertex_id % adjacent_vertex.vertex_id + 1, len(self.vertices)),
+                                                          Math.color_quantization(adjacent_vertex.vertex_id, len(self.vertices))),
                                    label=arrow_label)
             arrow_labels.append(arrow_label)
             arrow_plots.append(arrow_plot)

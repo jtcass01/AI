@@ -23,13 +23,13 @@ class VRP_GeneticAlgorithm(object):
         self.costs = list([])
         self.best_chromosome = None
 
+    def __str__(self):
+        return "GA_" + str(self.crossover_method) + "_" + str(self.mutation_method)
+
     def initialize_population(self, depot_location, customers):
         for chromosome_index in range(self.population_size):
             chromosome = VRP_GeneticAlgorithm.Chromosome(chromosome_index, depot_location, customers, crossover_method=self.crossover_method, mutation_method=self.mutation_method)
             self.population.append(chromosome)
-
-        for chromosome in self.population:
-            print(chromosome)
 
         self.population = np.array(self.population)
 
@@ -61,9 +61,10 @@ class VRP_GeneticAlgorithm(object):
 
             self.costs.append(self.best_chromosome.route.distance_traveled)
 
-        self.best_chromosome.route.recount_distance()
+        return self.best_chromosome.route.recount_distance()
 
-        return self.best_chromosome.route
+    def get_cost(self):
+        return self.best_chromosome.route.recount_distance()
 
     def display_result(self):
         self.display_state()
@@ -105,6 +106,8 @@ class VRP_GeneticAlgorithm(object):
     class Chromosome(object):
         def __init__(self, chromosome_id, depot_location, customers, crossover_method, mutation_method):
             self.chromosome_id = chromosome_id
+            self.depot_location = depot_location
+            self.customers = customers
             self.route = VRP_GeneticAlgorithm.Chromosome.generate_route(depot_location, customers)
             self.crossover_method = crossover_method
             self.mutation_method = mutation_method
@@ -129,18 +132,15 @@ class VRP_GeneticAlgorithm(object):
             # Read in the test data
             vertices =  np.array(vertices)
 
+            # randomize vertices
             random.shuffle(vertices)
 
-            # Need to check on vertices inside graph.
+            # create a new graph representing these vertices and walk them as presented
             route_graph = Graph(vertices)
             route = Route(route_graph)
+            route.walk_complete_path([vertex.vertex_id for vertex in vertices])
 
-            print(route)
-            route.walk_complete_path(vertices)
-
-            print(route_graph)
-
-            return Route(route_graph)
+            return route
 
 
         def crossover(self, other_chromosome):
@@ -237,7 +237,7 @@ class VRP_GeneticAlgorithm(object):
             new_route = Route(self.route.graph)
             new_route.walk_complete_path(new_path)
 
-            resultant_chromosome = VRP_GeneticAlgorithm.Chromosome(None, new_route, self.crossover_method, self.mutation_method)
+            resultant_chromosome = VRP_GeneticAlgorithm.Chromosome(None, self.depot_location, self.customers, self.crossover_method, self.mutation_method)
 
             return resultant_chromosome
 
@@ -374,11 +374,11 @@ def mutation_test():
 
 def traveling_salesman_solution_test():
     # Read in test data
-    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "datasets" + os.path.sep + "Random22.tsp"))
+    graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "datasets" + os.path.sep + "Random44.tsp"))
     # calculate edges
     graph.build_graph()
 
-    test_algorithm = VRP_GeneticAlgorithm(graph=graph, population_size=50, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=30, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
+    test_algorithm = VRP_GeneticAlgorithm(graph=graph, population_size=25, crossover_probability=0.8, mutation_probability=0.01, epoch_threshold=100, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
     test_algorithm.run()
     test_algorithm.display_result()
 

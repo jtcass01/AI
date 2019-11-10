@@ -150,7 +150,7 @@ class Math():
     @staticmethod
     def color_quantization(value, number_of_bins):
         assert 1 <= value <= number_of_bins, "Invalid vertex_id for color_quantization ({}) for color look_up.  " \
-                                     "Please update date to fit new range.".format(vertex_id)
+                                     "Please update date to fit new range.".format(value)
 
         size_of_bins = (256 - 0 + 1) / number_of_bins
 
