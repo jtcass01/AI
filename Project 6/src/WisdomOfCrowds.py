@@ -24,7 +24,12 @@ class WisdomOfCrowds_GeneticAlgorithm():
         self.crowd_solution = CrowdSolution(self.genetic_algorithms[0].graph)
 
     def __str__(self):
-        return "WisdomOfCrowds_GeneticAlgorithm|" + str([str(genetic_algorithm) + "|" for genetic_algorithm in self.genetic_algorithms])
+        resultant_string = "WisdomOfCrowds_GeneticAlgorithm"
+
+        for genetic_algorithm in self.genetic_algorithms:
+            resultant_string += "|" + str(genetic_algorithm)
+
+        return  resultant_string
 
     def initialize_population(self, depot_location, customers):
         self.depot_location = depot_location
