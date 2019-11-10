@@ -18,7 +18,7 @@ class WisdomOfCrowds_GeneticAlgorithm():
         self.weights = weights
         self.log_location = log_location
         self.crowd = list([])
-        self.crowd_solution = WisdomOfCrowds_GeneticAlgorithm.CrowdSolution(self.genetic_algorithms[0].graph)
+        self.crowd_solution = CrowdSolution(self.genetic_algorithms[0].graph)
 
     def run(self):
         genetic_algorithm_threads = list([])
@@ -49,7 +49,7 @@ class WisdomOfCrowds_GeneticAlgorithm():
     def generate_crowd_solution(self):
         for chromosome in self.crowd:
             for edge in chromosome.route.edges:
-                edge_entry = WisdomOfCrowds_GeneticAlgorithm.CrowdSolution.EdgeEntry(edge_key=str(edge), edge_count=1, edge=edge)
+                edge_entry = CrowdSolution.EdgeEntry(edge_key=str(edge), edge_count=1, edge=edge)
                 if edge_entry.edge_key in self.crowd_solution.edge_dictionary:
                     self.crowd_solution.edge_dictionary[edge_entry.edge_key].increment()
                 else:
@@ -58,187 +58,202 @@ class WisdomOfCrowds_GeneticAlgorithm():
                 if self.crowd_solution.edge_dictionary[str(edge)].edge_count > self.crowd_solution.max_edge_count:
                     self.crowd_solution.max_edge_count = self.crowd_solution.edge_dictionary[str(edge)].edge_count
 
-    class CrowdSolution(object):
-        def __init__(self, graph):
-            self.graph = graph
-            self.edge_dictionary = {}
-            self.route = Route(graph)
-            self.max_edge_count = 0
 
-        def log(self, log_path):
-            log = open(log_path, "w+")
-            log.write("edge_key" + ", " + "edge_count" + "\n")
+class CrowdSolution(object):
+    def __init__(self, graph):
+        self.graph = graph
+        self.edge_dictionary = {}
+        self.route = Route(graph)
+        self.max_edge_count = 0
 
-            for edge_key, edge_entry in self.edge_dictionary.items():
-                log.write(str(edge_entry.edge_key) + ", " + str(edge_entry.edge_count) + "\n")
+    def log(self, log_path):
+        log = open(log_path, "w+")
+        log.write("edge_key" + ", " + "edge_count" + "\n")
 
-            log.close()
+        for edge_key, edge_entry in self.edge_dictionary.items():
+            log.write(str(edge_entry.edge_key) + ", " + str(edge_entry.edge_count) + "\n")
 
-
-        def load(self, log_path):
-            with open(log_path, "r") as log:
-                data_line = log.readline()
-
-                while True:
-                    data_line = log.readline()
-                    if len(data_line) == 0:
-                        break
-
-                    edge_key, edge_count = data_line.split(", ")
-                    edge_count = int(edge_count)
-                    if edge_count > self.max_edge_count:
-                        self.max_edge_count = edge_count
-                    vertices = re.findall(r'\d+', edge_key)
-                    vertex_start = self.graph.get_vertex_by_id(int(vertices[0]))
-                    vertex_end = self.graph.get_vertex_by_id(int(vertices[1]))
-                    edge_entry = WisdomOfCrowds_GeneticAlgorithm.CrowdSolution.EdgeEntry(edge_key=edge_key, edge_count=edge_count, edge=Edge(vertex_start, vertex_end))
-                    self.edge_dictionary[edge_entry.edge_key] = edge_entry
+        log.close()
 
 
-        def display(self):
-            for edge_key, edge_entry in self.edge_dictionary.items():
-                print(str(edge_entry.edge_key) + ", " + str(edge_entry.edge_count))
-
-        def generate_heat_map(self, superiority_tolerance=0.8):
-            graph = self.graph
-            x = list([])
-            y = list([])
-            plots = list([])
-            arrow_plots = list([])
-            arrow_labels = list([])
-
-            # Iterate over vertices, retrieving x and y coordinates
-            for vertex in graph.vertices:
-                x.append(vertex.x)
-                y.append(vertex.y)
-
-            # Plot the vertices
-            vertex_plot = plt.scatter(x, y, label="Vertices")
-            plots.append(vertex_plot)
-
-            for edge_key, edge_entry in self.edge_dictionary.items():
-                if edge_entry.edge_count >= (self.max_edge_count * superiority_tolerance):
-                    vertices = re.findall(r'\d+', edge_entry.edge_key)
-                    vertex_start = graph.get_vertex_by_id(int(vertices[0]))
-                    vertex_end = graph.get_vertex_by_id(int(vertices[1]))
-                    arrow_label = "Edge {}->{}".format(vertices[0], vertices[1])
-                    arrow_plot = plt.arrow(vertex_start.x, vertex_start.y, vertex_end.x-vertex_start.x, vertex_end.y-vertex_start.y,
-                                           head_width=1, head_length=1,
-                                           color='#{}{}{}'.format(Math.normalize_rgb(self.max_edge_count - edge_entry.edge_count, 0, self.max_edge_count),
-                                                                  "00",
-                                                                  Math.normalize_rgb(edge_entry.edge_count, 0, self.max_edge_count)),
-                                           label=arrow_label)
-                    plots.append(arrow_plot)
-                    arrow_plots.append(arrow_plot)
-                    arrow_labels.append(arrow_label)
-
-            # Show the graph with a legend
-            plt.legend(arrow_plots, arrow_labels, loc=2, fontsize='small')
-            plt.show()
-
-        def edge_create_circular_path(self, edge):
-            starting_vertex = edge.vertices[0]
-            ending_vertex = edge.vertices[1]
-            initial_ending_vertex = ending_vertex
+    def load(self, log_path):
+        with open(log_path, "r") as log:
+            data_line = log.readline()
 
             while True:
-                edge_matching_starting_vertex = self.route.get_edge_by_vertex_id(starting_vertex.vertex_id, 1)
-
-                if edge_matching_starting_vertex is None:
+                data_line = log.readline()
+                if len(data_line) == 0:
                     break
-                else:
-                    if edge_matching_starting_vertex.vertices[0].vertex_id == initial_ending_vertex.vertex_id:
-                        return True
 
-                    starting_vertex = edge_matching_starting_vertex.vertices[0]
-                    ending_vertex = edge_matching_starting_vertex.vertices[1]
+                edge_key, edge_count = data_line.split(", ")
+                edge_count = int(edge_count)
+                if edge_count > self.max_edge_count:
+                    self.max_edge_count = edge_count
+                vertices = re.findall(r'\d+', edge_key)
+                vertex_start = self.graph.get_vertex_by_id(int(vertices[0]))
+                vertex_end = self.graph.get_vertex_by_id(int(vertices[1]))
+                edge_entry = CrowdSolution.EdgeEntry(edge_key=edge_key, edge_count=edge_count, edge=Edge(vertex_start, vertex_end))
+                self.edge_dictionary[edge_entry.edge_key] = edge_entry
 
-            return False
 
-        def complete_graph_greedy_heuristic(self, superiority_tolerance=0.8):
-            self.route.reset_route()
-            starting_vertex = None
+    def display(self):
+        for edge_key, edge_entry in self.edge_dictionary.items():
+            print(str(edge_entry.edge_key) + ", " + str(edge_entry.edge_count))
 
-            # Update route to match current representation given superiority_tolerance
-            superiority_edges = [(edge_key, edge_entry) for (edge_key, edge_entry) in self.edge_dictionary.items() if edge_entry.edge_count >= (self.max_edge_count * superiority_tolerance)]
+    def generate_heat_map(self, superiority_tolerance=0.8):
+        graph = self.graph
+        x = list([])
+        y = list([])
+        plots = list([])
+        arrow_plots = list([])
+        arrow_labels = list([])
 
-            for edge_key, edge_entry in superiority_edges:
-                better_edge = False
-                for edge_key_1, edge_entry_1 in superiority_edges:
-                    if edge_entry.edge.vertices[0].vertex_id == edge_entry_1.edge.vertices[0].vertex_id or edge_entry.edge.vertices[1].vertex_id == edge_entry_1.edge.vertices[1].vertex_id:
-                        if edge_entry.edge_count == edge_entry_1.edge_count:
-                            if edge_entry.edge.distance > edge_entry_1.edge.distance:
-                                better_edge = True
-                        elif edge_entry.edge_count < edge_entry_1.edge_count:
+        # Iterate over vertices, retrieving x and y coordinates
+        for vertex in graph.vertices:
+            x.append(vertex.x)
+            y.append(vertex.y)
+
+        # Plot the vertices
+        vertex_plot = plt.scatter(x, y, label="Vertices")
+        plots.append(vertex_plot)
+
+        for edge_key, edge_entry in self.edge_dictionary.items():
+            if edge_entry.edge_count >= (self.max_edge_count * superiority_tolerance):
+                vertices = re.findall(r'\d+', edge_entry.edge_key)
+                vertex_start = graph.get_vertex_by_id(int(vertices[0]))
+                vertex_end = graph.get_vertex_by_id(int(vertices[1]))
+                arrow_label = "Edge {}->{}".format(vertices[0], vertices[1])
+                arrow_plot = plt.arrow(vertex_start.x, vertex_start.y, vertex_end.x-vertex_start.x, vertex_end.y-vertex_start.y,
+                                       head_width=1, head_length=1,
+                                       color='#{}{}{}'.format(Math.normalize_rgb(self.max_edge_count - edge_entry.edge_count, 0, self.max_edge_count),
+                                                              "00",
+                                                              Math.normalize_rgb(edge_entry.edge_count, 0, self.max_edge_count)),
+                                       label=arrow_label)
+                plots.append(arrow_plot)
+                arrow_plots.append(arrow_plot)
+                arrow_labels.append(arrow_label)
+
+        # Show the graph with a legend
+        plt.legend(arrow_plots, arrow_labels, loc=2, fontsize='small')
+        plt.show()
+
+    def get_unvisited_vertices_and_ending_vertices(self):
+        last_visited_vertex = None
+        unvisited_vertices = list([])
+        ending_vertices = list([])
+        for vertex in self.route.vertices:
+            if not vertex.visited:
+                unvisited_vertices.append(vertex)
+                if last_visited_vertex is not None:
+                    ending_vertices.append(last_visited_vertex)
+            last_visited_vertex = vertex
+        ending_vertices.append(self.route.vertices[-1])
+
+        return unvisited_vertices, ending_vertices
+
+    def edge_create_circular_path(self, edge):
+        starting_vertex = edge.vertices[0]
+        ending_vertex = edge.vertices[1]
+        initial_ending_vertex = ending_vertex
+
+        while True:
+            edge_matching_starting_vertex = self.route.get_edge_by_vertex_id(starting_vertex.vertex_id, 1)
+
+            if edge_matching_starting_vertex is None:
+                break
+            else:
+                if edge_matching_starting_vertex.vertices[0].vertex_id == initial_ending_vertex.vertex_id:
+                    return True
+
+                starting_vertex = edge_matching_starting_vertex.vertices[0]
+                ending_vertex = edge_matching_starting_vertex.vertices[1]
+
+        return False
+
+    def complete_graph_greedy_heuristic(self, superiority_tolerance=0.8):
+        self.route.reset_route()
+        starting_vertex = None
+
+        # Update route to match current representation given superiority_tolerance
+        superiority_edges = [(edge_key, edge_entry) for (edge_key, edge_entry) in self.edge_dictionary.items() if edge_entry.edge_count >= (self.max_edge_count * superiority_tolerance)]
+
+        for edge_key, edge_entry in superiority_edges:
+            better_edge = False
+            for edge_key_1, edge_entry_1 in superiority_edges:
+                if edge_entry.edge.vertices[0].vertex_id == edge_entry_1.edge.vertices[0].vertex_id or edge_entry.edge.vertices[1].vertex_id == edge_entry_1.edge.vertices[1].vertex_id:
+                    if edge_entry.edge_count == edge_entry_1.edge_count:
+                        if edge_entry.edge.distance > edge_entry_1.edge.distance:
                             better_edge = True
+                    elif edge_entry.edge_count < edge_entry_1.edge_count:
+                        better_edge = True
 
-                if not better_edge:
-                    if self.route.edges is None:
-                        self.route.add_edge(edge_entry.edge)
-                    else:
-                        if not self.edge_create_circular_path(edge_entry.edge):
-                            self.route.add_edge(edge_entry.edge)
-            self.route.distance_traveled = self.route.recount_distance()
-
-            def choose_next_vertex():
-                closest_item_next_to_closest_vertex = None
-                r_type_of_closest_item = None
-                closest_vertex = None
-                closest_distance = None
-                starting_vertex = self.route.vertices[0]
-
-                for vertex in self.route.get_vertices_not_in_route():
-                    closest_item_next_to_vertex, item_distance = self.route.get_shortest_distance_to_route(vertex)
-
-                    if closest_vertex is None:
-                        closest_vertex = vertex
-                        closest_distance = item_distance
-                        closest_item_next_to_closest_vertex = closest_item_next_to_vertex
-                    else:
-                        if item_distance < closest_distance:
-                            closest_distance = item_distance
-                            closest_vertex = vertex
-                            closest_item_next_to_closest_vertex = closest_item_next_to_vertex
-
-                if len(self.route.get_unvisited_vertices()) == 0:
-                    return self.route.vertices[0], self.route.vertices[1]
+            if not better_edge:
+                if self.route.edges is None:
+                    self.route.add_edge(edge_entry.edge)
                 else:
-                    return closest_vertex, closest_item_next_to_closest_vertex
+                    if not self.edge_create_circular_path(edge_entry.edge):
+                        self.route.add_edge(edge_entry.edge)
+        self.route.distance_traveled = self.route.recount_distance()
 
-            while len(self.route.vertices) < len(self.route.graph.vertices):
-                next_vertex, closest_item_next_to_vertex = choose_next_vertex()
-                self.route.lasso(next_vertex, closest_item_next_to_vertex)
+        def choose_next_vertex():
+            closest_item_next_to_closest_vertex = None
+            r_type_of_closest_item = None
+            closest_vertex = None
+            closest_distance = None
+            starting_vertex = self.route.vertices[0]
 
-            self.route.greedy_recombine()
+            for vertex in self.route.get_vertices_not_in_route():
+                closest_item_next_to_vertex, item_distance = self.route.get_shortest_distance_to_route(vertex)
 
-            return self.route
+                if closest_vertex is None:
+                    closest_vertex = vertex
+                    closest_distance = item_distance
+                    closest_item_next_to_closest_vertex = closest_item_next_to_vertex
+                else:
+                    if item_distance < closest_distance:
+                        closest_distance = item_distance
+                        closest_vertex = vertex
+                        closest_item_next_to_closest_vertex = closest_item_next_to_vertex
 
-        class EdgeEntry(object):
-            def __init__(self, edge_key, edge_count, edge):
-                self.edge_key = edge_key
-                self.edge_count = edge_count
-                self.edge = edge
+            if len(self.route.get_unvisited_vertices()) == 0:
+                return self.route.vertices[0], self.route.vertices[1]
+            else:
+                return closest_vertex, closest_item_next_to_closest_vertex
 
-            def __eq__(self, other):
-                return self.edge_key == other.edge_key
+        while len(self.route.vertices) < len(self.route.graph.vertices):
+            next_vertex, closest_item_next_to_vertex = choose_next_vertex()
+            self.route.lasso(next_vertex, closest_item_next_to_vertex)
 
-            def __lt__(self, other):
-                return self.edge_count < other.edge_count
+        self.route.greedy_recombine()
 
-            def __le__(self, other):
-                return self.edge_count <= other.edge_count
+        return self.route
 
-            def __gt__(self, other):
-                return self.edge_count > other.edge_count
+    class EdgeEntry(object):
+        def __init__(self, edge_key, edge_count, edge):
+            self.edge_key = edge_key
+            self.edge_count = edge_count
+            self.edge = edge
 
-            def __ge__(self, other):
-                return self.edge_count >= other.edge_count
+        def __eq__(self, other):
+            return self.edge_key == other.edge_key
 
-            def __str__(self):
-                return "[edge_key: " + str(self.edge_key) + ", edge_count: " + str(self.edge_count) + ", edge: " + str(self.edge) + "]"
+        def __lt__(self, other):
+            return self.edge_count < other.edge_count
 
-            def increment(self):
-                self.edge_count += 1
+        def __le__(self, other):
+            return self.edge_count <= other.edge_count
+
+        def __gt__(self, other):
+            return self.edge_count > other.edge_count
+
+        def __ge__(self, other):
+            return self.edge_count >= other.edge_count
+
+        def __str__(self):
+            return "[edge_key: " + str(self.edge_key) + ", edge_count: " + str(self.edge_count) + ", edge: " + str(self.edge) + "]"
+
+        def increment(self):
+            self.edge_count += 1
 
 
 def WisdomOfCrowds_GeneticAlgorithm_test(graph_location, log_location, epoch_threshold=25):
@@ -284,7 +299,7 @@ def WOC_load_test(graph_location, log_location, superiority_tolerance=0.8):
     # calculate edges
     graph.build_graph()
 
-    test_crowd_solution = WisdomOfCrowds_GeneticAlgorithm.CrowdSolution(graph)
+    test_crowd_solution = CrowdSolution(graph)
 
     test_crowd_solution.load(log_location)
     test_crowd_solution.display()
@@ -296,7 +311,7 @@ def WOC_load_and_complete_test(graph_location, log_location, superiority_toleran
     # calculate edges
     graph.build_graph()
 
-    test_crowd_solution = WisdomOfCrowds_GeneticAlgorithm.CrowdSolution(graph)
+    test_crowd_solution = CrowdSolution(graph)
     test_crowd_solution.load(log_location)
     test_crowd_solution.generate_heat_map(superiority_tolerance=superiority_tolerance)
     test_crowd_solution.complete_graph_greedy_heuristic(superiority_tolerance=superiority_tolerance)
@@ -338,7 +353,7 @@ def WOC_start_to_finish(graph_location, log_location, epoch_threshold=25, superi
     print("ordered_crossover_rsm")
     ordered_crossover_rsm.display_result()
 
-    test_crowd_solution = WisdomOfCrowds_GeneticAlgorithm.CrowdSolution(graph)
+    test_crowd_solution = CrowdSolution(graph)
     test_crowd_solution.load(log_location)
     test_crowd_solution.generate_heat_map(superiority_tolerance=superiority_tolerance)
     test_crowd_solution.complete_graph_greedy_heuristic(superiority_tolerance=superiority_tolerance)

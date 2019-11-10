@@ -76,6 +76,15 @@ class Math():
 
             return result
 
+    def compute_slope(point1, point2):
+        x1, y1 = point1
+        x2, y2 = point2
+
+        if x2 == x1:
+            return None
+        else:
+            return (y2 - y1) / (x2 - x1)
+
     @staticmethod
     def calculate_distance_from_point_to_point(point1, point2):
         x1, y1 = point1

@@ -1,6 +1,5 @@
 #!/usr/bin/python
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import random
@@ -11,7 +10,7 @@ from copy import deepcopy
 from FileHandler import FileHandler
 from Graph import Route, Graph
 
-class GeneticAlgorithm(object):
+class VRP_GeneticAlgorithm(object):
     def __init__(self, graph, crossover_method, mutation_method, population_size=100, crossover_probability=0.6, mutation_probability=0.02, epoch_threshold=20):
         self.graph = graph
         self.crossover_method = crossover_method
@@ -23,27 +22,16 @@ class GeneticAlgorithm(object):
         self.population = list([])
         self.costs = list([])
         self.best_chromosome = None
-        self.initialize_population()
 
-    def initialize_population(self):
-        states = [1, 0]
-        connection_dictionary = {}
-
+    def initialize_population(self, depot_location, customers):
         for chromosome_index in range(self.population_size):
-            for row_index in range(1, len(self.graph.vertices)+1):
-                connection_dictionary[str(row_index)] = random.sample(states*len(self.graph.vertices), len(self.graph.vertices))
-                # Assert there are no self connections.
-                connection_dictionary[str(row_index)][row_index-1] = 0
-
-            dataframe = pd.DataFrame.from_dict(connection_dictionary, orient='index', columns=list(range(1, len(self.graph.vertices)+1)))
-            random_route = Route(self.graph)
-            random_route.load_edge_dataframe(dataframe)
-            chromosome = GeneticAlgorithm.Chromosome(chromosome_index, route=random_route, allele_dataframe=dataframe, crossover_method=self.crossover_method, mutation_method=self.mutation_method)
+            chromosome = VRP_GeneticAlgorithm.Chromosome(chromosome_index, depot_location, customers, crossover_method=self.crossover_method, mutation_method=self.mutation_method)
             self.population.append(chromosome)
 
-        self.population = np.array(self.population)
+        for chromosome in self.population:
+            print(chromosome)
 
-        self.population[0].retrieve_alleles()
+        self.population = np.array(self.population)
 
     def run(self):
         improvement = 0
@@ -115,15 +103,14 @@ class GeneticAlgorithm(object):
         self.population[chromosome_id] = new_chromosome
 
     class Chromosome(object):
-        def __init__(self, chromosome_id, route, allele_dataframe, crossover_method, mutation_method):
+        def __init__(self, chromosome_id, depot_location, customers, crossover_method, mutation_method):
             self.chromosome_id = chromosome_id
-            self.route = route
-            self.allele_dataframe = allele_dataframe
+            self.route = VRP_GeneticAlgorithm.Chromosome.generate_route(depot_location, customers)
             self.crossover_method = crossover_method
             self.mutation_method = mutation_method
 
         def __str__(self):
-            return "Chromosome #"  + str(self.chromosome_id) + " | Slope #" + str(self.route.slope_number)
+            return "Chromosome #"  + str(self.chromosome_id) + " | " + str(self.fitness())
 
         def display_vertex_ids(self):
             string = "["
@@ -132,40 +119,34 @@ class GeneticAlgorithm(object):
 
             print(string[:-2] + "]")
 
-        def retrieve_alleles(self):
-            alleles = None
+        @staticmethod
+        def generate_route(depot_location, customers):
+            vertices = list([depot_location])
 
-            print(self.allele_dataframe)
+            for customer in customers:
+                vertices.append(customer)
 
-            for row_index, row in self.allele_dataframe.iterrows():
-                if alleles is None:
-                    alleles = np.array(list(row[:int(row_index)-1]))
-                    alleles = np.concatenate((alleles, list(row[int(row_index):])), axis=None)
-                else:
-                    alleles = np.concatenate((alleles, list(row[:int(row_index)-1])), axis=None)
-                    alleles = np.concatenate((alleles, list(row[int(row_index):])), axis=None)
+            # Read in the test data
+            vertices =  np.array(vertices)
 
-            print(", ".join([str(allele) for allele in alleles]))
+            random.shuffle(vertices)
 
-            self.update_allele_dataframe()
-            print(self.allele_dataframe)
+            # Need to check on vertices inside graph.
+            route_graph = Graph(vertices)
+            route = Route(route_graph)
 
-            return alleles
+            print(route)
+            route.walk_complete_path(vertices)
 
-        def update_allele_dataframe(self, alleles = [0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]):
-            allele_index = 0
+            print(route_graph)
 
-            for row_index, row in self.allele_dataframe.iterrows():
-                for column_index, connection_boolean in enumerate(row):
-                    if int(row_index) != column_index+1:
-                        print(self.allele_dataframe[row_index])
-                        self.allele_dataframe[row_index][str(column_index)+1] = alleles[allele_index]
-                        allele_index += 1
+            return Route(route_graph)
+
 
         def crossover(self, other_chromosome):
             new_path = list([])
 
-            if self.crossover_method == GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM:
+            if self.crossover_method == VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM:
                 self_turn = True
 
                 while len(new_path) < len(self.route.vertices)-1:
@@ -182,7 +163,7 @@ class GeneticAlgorithm(object):
 
                         self_turn = True
 
-            elif self.crossover_method == GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED:
+            elif self.crossover_method == VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED:
                 p1 = random.randint(1, len(self.route.vertices)-3)
                 p2 = random.randint(p1+1, len(self.route.vertices)-2)
 
@@ -218,7 +199,7 @@ class GeneticAlgorithm(object):
 
                 new_path += self_s3
 
-            elif self.crossover_method == GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER:
+            elif self.crossover_method == VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER:
                 p1 = random.randint(1, len(self.route.vertices)-3)
                 p2 = random.randint(p1+1, len(self.route.vertices)-2)
                 j_1 = p1 + 1
@@ -256,14 +237,14 @@ class GeneticAlgorithm(object):
             new_route = Route(self.route.graph)
             new_route.walk_complete_path(new_path)
 
-            resultant_chromosome = GeneticAlgorithm.Chromosome(None, new_route, self.crossover_method, self.mutation_method)
+            resultant_chromosome = VRP_GeneticAlgorithm.Chromosome(None, new_route, self.crossover_method, self.mutation_method)
 
             return resultant_chromosome
 
         def mutate(self):
             new_path = list([])
 
-            if self.mutation_method == GeneticAlgorithm.Chromosome.MutationMethods.TWORS:
+            if self.mutation_method == VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS:
                 # Generate random indices for swapping
                 mutated_index_0 = random.randint(0, len(self.route.vertices)-3)
                 mutated_index_1 = random.randint(mutated_index_0+1, len(self.route.vertices)-2)
@@ -278,7 +259,7 @@ class GeneticAlgorithm(object):
                         new_path.insert(mutated_index_0, vertex.vertex_id)
                     else:
                         new_path.append(vertex.vertex_id)
-            elif self.mutation_method == GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION:
+            elif self.mutation_method == VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION:
                 for vertex in np.flip(self.route.vertices[:-1]):
                     new_path.append(vertex.vertex_id)
 
@@ -287,20 +268,23 @@ class GeneticAlgorithm(object):
             self.route.reset_route()
             self.route.walk_complete_path(new_path)
 
+        def fitness(self):
+            return self.route.distance_traveled
+
         def __eq__(self, other):
-            return self.route.distance_traveled == other.route.distance_traveled
+            return self.fitness() == other.fitness()
 
         def __lt__(self, other):
-            return self.route.distance_traveled < other.route.distance_traveled
+            return self.fitness() < other.fitness()
 
         def __le__(self, other):
-            return self.route.distance_traveled <= other.route.distance_traveled
+            return self.fitness() <= other.fitness()
 
         def __gt__(self, other):
-            return self.route.distance_traveled > other.route.distance_traveled
+            return self.fitness() > other.fitness()
 
         def __ge__(self, other):
-            return self.route.distance_traveled >= other.route.distance_traveled
+            return self.fitness() >= other.fitness()
 
         class CrossoverMethods(Enum):
             INVALID = 0
@@ -317,16 +301,16 @@ class GeneticAlgorithm(object):
 def build_chromosome_from_path_and_graph(chromosome_id, path, graph, crossover_method, mutation_method):
     route = Route(graph)
     route.walk_complete_path(path)
-    return GeneticAlgorithm.Chromosome(chromosome_id, route, crossover_method, mutation_method)
+    return VRP_GeneticAlgorithm.Chromosome(chromosome_id, route, crossover_method, mutation_method)
 
 def crossover_test():
-    mutation_method = GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION
+    mutation_method = VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION
 
     for crossover_method_index in range(1, 4):
-        crossover_method = GeneticAlgorithm.Chromosome.CrossoverMethods(crossover_method_index)
+        crossover_method = VRP_GeneticAlgorithm.Chromosome.CrossoverMethods(crossover_method_index)
         print("\nCrossover Method:", crossover_method)
 
-        if crossover_method == GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM:
+        if crossover_method == VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM:
             # Read in test data
             graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random6.tsp"))
 
@@ -340,7 +324,7 @@ def crossover_test():
 
             child = parent_chromosome_1.crossover(parent_chromosome_2)
 
-        elif crossover_method == GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED:
+        elif crossover_method == VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED:
             # Read in test data
             graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random8.tsp"))
 
@@ -354,7 +338,7 @@ def crossover_test():
 
             child = parent_chromosome_1.crossover(parent_chromosome_2)
 
-        elif crossover_method == GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER:
+        elif crossover_method == VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER:
             # Read in test data
             graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random8.tsp"))
 
@@ -371,13 +355,13 @@ def crossover_test():
         print("Child: ", child.route)
 
 def mutation_test():
-    crossover_method = GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER
+    crossover_method = VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER
 
     for mutation_method_index in range(1, 3):
-        mutation_method = GeneticAlgorithm.Chromosome.MutationMethods(mutation_method_index)
+        mutation_method = VRP_GeneticAlgorithm.Chromosome.MutationMethods(mutation_method_index)
         print("\nMutation Method:", mutation_method)
 
-        if mutation_method == GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION:
+        if mutation_method == VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION:
             # Read in test data
             graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "docs" + os.path.sep + "datasets" + os.path.sep + "Random6.tsp"))
 
@@ -388,13 +372,16 @@ def mutation_test():
 
     print(test_chromosome.route)
 
-def slope_number_test():
+def traveling_salesman_solution_test():
     # Read in test data
     graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "datasets" + os.path.sep + "Random22.tsp"))
+    # calculate edges
+    graph.build_graph()
 
-    test_algorithm = GeneticAlgorithm(graph=graph, population_size=50, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=30, crossover_method=GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-#    test_algorithm.run()
-#    test_algorithm.display_result()
+    test_algorithm = VRP_GeneticAlgorithm(graph=graph, population_size=50, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=30, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
+    test_algorithm.run()
+    test_algorithm.display_result()
+
 
 if __name__ == "__main__":
-    slope_number_test()
+    traveling_salesman_solution_test()
