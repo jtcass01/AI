@@ -30,8 +30,6 @@ class WisdomOfCrowds_GeneticAlgorithm():
         self.depot_location = depot_location
         self.customers = customers
 
-        print(self.customers)
-
         print("Generating Genetic Algorithm Threads...")
         for genetic_algorithm in self.genetic_algorithms:
             genetic_algorithm.initialize_population(depot_location, customers)
@@ -46,19 +44,21 @@ class WisdomOfCrowds_GeneticAlgorithm():
         for genetic_algorithm_thread in self.threads:
             genetic_algorithm_thread.join()
 
+        # Generate crowd solution and log it.
         self.retrieve_crowd()
         self.generate_crowd_solution()
         self.crowd_solution.log(self.log_location)
         del self.crowd_solution
+
+        # Reload crowd solution - this break was added to minimize loss from deepcopy error
         self.crowd_solution = CrowdSolution(self.genetic_algorithms[0].graph)
         self.crowd_solution.load(self.log_location)
-        self.crowd_solution.display()
-        self.crowd_solution.complete_graph_greedy_heuristic(self.depot_location, self.customers, superiority_tolerance=0.1)
-        print("after greedy")
-        self.crowd_solution.display()
+
+        # Complete the graph using a greedy insertion heurstic and return.
+        self.crowd_solution.complete_graph_greedy_heuristic(self.depot_location, self.customers, superiority_tolerance=0.3)
+        return self.crowd_solution.route.recount_distance()
 
     def get_cost(self):
-        self.crowd_solution.route.plot()
         return self.crowd_solution.route.recount_distance()
 
     def display_result(self):
@@ -126,7 +126,7 @@ class CrowdSolution(object):
         for edge_key, edge_entry in self.edge_dictionary.items():
             print(str(edge_entry.edge_key) + ", " + str(edge_entry.edge_count))
 
-    def generate_heat_map(self, superiority_tolerance=0.8):
+    def generate_heat_map(self, superiority_tolerance=0.3):
         graph = self.graph
         x = list([])
         y = list([])
@@ -196,7 +196,7 @@ class CrowdSolution(object):
 
         return False
 
-    def complete_graph_greedy_heuristic(self, depot_location, customers, superiority_tolerance=0.8):
+    def complete_graph_greedy_heuristic(self, depot_location, customers, superiority_tolerance=0.3):
         vertices = list([depot_location])
 
         for customer in customers:
@@ -224,7 +224,6 @@ class CrowdSolution(object):
                 else:
                     if not self.edge_create_circular_path(edge_entry.edge):
                         self.route.add_edge(edge_entry.edge)
-        self.route.distance_traveled = self.route.recount_distance()
 
         def choose_next_vertex():
             closest_item_next_to_closest_vertex = None
@@ -251,6 +250,7 @@ class CrowdSolution(object):
                 return self.route.vertices[0], self.route.vertices[-1]
             else:
                 return closest_vertex, closest_item_next_to_closest_vertex
+
 
         while len(self.route.vertices) < len(vertices):
             next_vertex, closest_item_next_to_vertex = choose_next_vertex()
@@ -286,113 +286,3 @@ class CrowdSolution(object):
 
         def increment(self):
             self.edge_count += 1
-
-
-def WisdomOfCrowds_GeneticAlgorithm_test(graph_location, log_location, epoch_threshold=25):
-    # Read in test data
-    graph = Graph(FileHandler.read_graph(graph_location))
-    # calculate edges
-    graph.build_graph()
-
-    uniform_twors = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-    uniform_rsm = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
-    partially_mapped_twors = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-    partially_mapped_rms = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
-    ordered_crossover_twors = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-    ordered_crossover_rsm = VRP_GeneticAlgorithm(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
-
-    algorithms = [uniform_twors, uniform_rsm, partially_mapped_twors, partially_mapped_rms, ordered_crossover_twors, ordered_crossover_rsm]
-
-    test_algorithm = WisdomOfCrowds_GeneticAlgorithm(genetic_algorithms=algorithms, weights=[0.05, 0.05, 0.05, 0.05, 0.6, 0.2], log_location=log_location)
-    test_algorithm.run()
-    test_algorithm.crowd_solution.generate_heat_map()
-
-    print("uniform_twors")
-    uniform_twors.display_result()
-
-    print("uniform_rsm")
-    uniform_rsm.display_result()
-
-    print("partially_mapped_twors")
-    partially_mapped_twors.display_result()
-
-    print("partially_mapped_rms")
-    partially_mapped_rms.display_result()
-
-    print("ordered_crossover_twors")
-    ordered_crossover_twors.display_result()
-
-    print("ordered_crossover_rsm")
-    ordered_crossover_rsm.display_result()
-
-def WOC_load_test(graph_location, log_location, superiority_tolerance=0.8):
-    # Read in test data
-    graph = Graph(FileHandler.read_graph(graph_location))
-    # calculate edges
-    graph.build_graph()
-
-    test_crowd_solution = CrowdSolution(graph)
-
-    test_crowd_solution.load(log_location)
-    test_crowd_solution.display()
-    test_crowd_solution.generate_heat_map(superiority_tolerance=superiority_tolerance)
-
-def WOC_load_and_complete_test(graph_location, log_location, superiority_tolerance=0.8):
-    # Read in test data
-    graph = Graph(FileHandler.read_graph(graph_location))
-    # calculate edges
-    graph.build_graph()
-
-    test_crowd_solution = CrowdSolution(graph)
-    test_crowd_solution.load(log_location)
-    test_crowd_solution.generate_heat_map(superiority_tolerance=superiority_tolerance)
-    test_crowd_solution.complete_graph_greedy_heuristic(superiority_tolerance=superiority_tolerance)
-    test_crowd_solution.route.plot()
-
-def WOC_start_to_finish(graph_location, log_location, epoch_threshold=25, superiority_tolerance=0.8):
-    # Read in test data
-    graph = Graph(FileHandler.read_graph(graph_location))
-    # calculate edges
-    graph.build_graph()
-
-    uniform_twors = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.UNIFORM, mutation_method=closest_distance.Chromosome.MutationMethods.TWORS)
-    uniform_rsm = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.UNIFORM, mutation_method=closest_distance.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
-    partially_mapped_twors = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=closest_distance.Chromosome.MutationMethods.TWORS)
-    partially_mapped_rms = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.PARTIALLY_MAPPED, mutation_method=closest_distance.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
-    ordered_crossover_twors = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=closest_distance.Chromosome.MutationMethods.TWORS)
-    ordered_crossover_rsm = closest_distance(graph, population_size=25, crossover_probability=0.8, mutation_probability=0.02, epoch_threshold=epoch_threshold, crossover_method=closest_distance.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=closest_distance.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION)
-
-    algorithms = [uniform_twors, uniform_rsm, partially_mapped_twors, partially_mapped_rms, ordered_crossover_twors, ordered_crossover_rsm]
-
-    test_algorithm = WisdomOfCrowds_GeneticAlgorithm(genetic_algorithms=algorithms, weights=[0.05, 0.05, 0.05, 0.05, 0.6, 0.2], log_location=log_location)
-    test_algorithm.run()
-
-    print("uniform_twors")
-    uniform_twors.display_result()
-
-    print("uniform_rsm")
-    uniform_rsm.display_result()
-
-    print("partially_mapped_twors")
-    partially_mapped_twors.display_result()
-
-    print("partially_mapped_rms")
-    partially_mapped_rms.display_result()
-
-    print("ordered_crossover_twors")
-    ordered_crossover_twors.display_result()
-
-    print("ordered_crossover_rsm")
-    ordered_crossover_rsm.display_result()
-
-    test_crowd_solution = CrowdSolution(graph)
-    test_crowd_solution.load(log_location)
-    test_crowd_solution.generate_heat_map(superiority_tolerance=superiority_tolerance)
-    test_crowd_solution.complete_graph_greedy_heuristic(superiority_tolerance=superiority_tolerance)
-    test_crowd_solution.route.plot()
-
-
-if __name__ == "__main__":
-    WOC_start_to_finish(graph_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "datasets" + os.path.sep + "Random44.tsp", \
-                  log_location=os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "crowd_" + "Random44_" + datetime.datetime.now().isoformat()[:10] + "_0.csv",
-                  superiority_tolerance=0.2)

@@ -124,33 +124,56 @@ class Route(object):
         return [vertex for vertex in self.graph.vertices if vertex not in self.vertices]
 
     def greedy_recombine(self):
-        vertex_start = self.edges[0].vertices[0]
-        vertex_end = self.edges[0].vertices[1]
-        new_edges = np.array([self.edges[0]])
-        new_vertices = np.array([vertex_start, vertex_end])
-
-        remaining_edge_starts = [edge for edge in self.edges if not np.isin(edge,new_edges) and not edge.vertices[0].visited]
-
-        while len(remaining_edge_starts) > 0:
-            edge_matching_end_vertex = self.get_edge_by_vertex_id(vertex_end.vertex_id, 0)
-
-            while edge_matching_end_vertex is not None:
-                new_edges = np.append(new_edges, [edge_matching_end_vertex])
-                vertex_start = edge_matching_end_vertex.vertices[0]
-                vertex_end = edge_matching_end_vertex.vertices[1]
-                edge_matching_end_vertex = self.get_edge_by_vertex_id(vertex_end.vertex_id, 0)
-
-            remaining_edge_starts = [edge for edge in self.edges if not np.isin(edge,new_edges) and not edge.vertices[0].visited]
-
-            if len(remaining_edge_starts) > 0:
-                new_edges = np.append(new_edges, [Edge(vertex_end, remaining_edge_starts[0].vertices[0])])
-                vertex_start = remaining_edge_starts[0].vertices[0]
-                vertex_end = remaining_edge_starts[0].vertices[0]
-
+        vertices = self.vertices
         self.reset_route()
-        for edge in new_edges:
-            self.goto(edge.vertices[0])
-        self.goto(new_edges[0].vertices[0])
+        for vertex in vertices:
+            self.goto(vertex)
+        self.goto(vertices[0])
+
+#        vertex_start = self.edges[0].vertices[0]
+#        vertex_end = self.edges[0].vertices[1]
+#        self.edges[0].vertices[1].visited = True
+#
+#        new_edges = np.array([self.edges[0]])
+#        new_vertices = np.array([vertex_start, vertex_end])
+#
+#        print(self)
+#
+#        remaining_edge_starts = np.array([edge for edge in self.edges if not edge.vertices[0].visited])
+#
+#        while len(remaining_edge_starts) > 0:
+#            if len(remaining_edge_starts) == 1:
+#                self.goto(remaining_edge_starts[0].vertices[0])
+#            else:
+#                for remaining_edge_start in remaining_edge_starts:
+#                    if not remaining_edge_start.vertices[1].vertex_id == self.edges[0].vertices[0].vertex_id:
+#                        edge_matching_end_vertex = self.get_edge_by_vertex_id(remaining_edge_start.vertices[1].vertex_id, 0)
+#                        edge_matching_end_vertex.vertices[0].visisted = True
+#            remaining_edge_starts = np.array([edge for edge in self.edges if not edge.vertices[0].visited])
+#            print("remaining_edge_starts", str(remaining_edge_starts))
+
+#        while len(remaining_edge_starts) > 0:
+#            edge_matching_end_vertex = self.get_edge_by_vertex_id(vertex_end.vertex_id, 0)
+#
+#            while edge_matching_end_vertex is not None:
+#                new_edges = np.append(new_edges, [edge_matching_end_vertex])
+#                edge_matching_end_vertex.vertices[1].visited = True
+#                vertex_start = edge_matching_end_vertex.vertices[0]
+#                vertex_end = edge_matching_end_vertex.vertices[1]
+#                edge_matching_end_vertex = self.get_edge_by_vertex_id(vertex_end.vertex_id, 0)
+#
+#            remaining_edge_starts = [edge for edge in self.edges if not np.isin(edge,new_edges) and not edge.vertices[0].visited]
+#
+#            if len(remaining_edge_starts) > 0:
+#                new_edges = np.append(new_edges, [Edge(vertex_end, remaining_edge_starts[0].vertices[0])])
+#                edge_matching_end_vertex.vertices[1].visited = True
+#                vertex_start = remaining_edge_starts[0].vertices[0]
+#                vertex_end = remaining_edge_starts[0].vertices[0]
+#
+#        self.reset_route()
+#        for edge in new_edges:
+#            self.goto(edge.vertices[0])
+#        self.goto(new_edges[0].vertices[0])
 
 
     def add_edge(self, edge):
