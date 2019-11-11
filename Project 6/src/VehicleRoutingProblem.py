@@ -91,13 +91,23 @@ def vehicle_routing_problem_test(dataset, population_size_per_genetic_algorithm,
     test_log_location = os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "VehicleRoutingProblemTest_" + dataset +"_" + str(number_of_depots) + "_" +  str(number_of_customers) + "_" + datetime.datetime.now().isoformat()[:10] + ".csv"
     FileHandler.start_test(test_log_location, data_labels=test_data_labels)
 
+    distances_traveled = list([])
+    run_times = list([])
     for algorithm in algorithms:
         test_problem = VehicleRoutingProblem(algorithm, graph, number_of_depots, number_of_customers)
 
         start = time.time()
         distance_traveled = test_problem.run()
-        end = time.time()
-        FileHandler.log_test(test_log_location, test_name=str(algorithm), test_result=distance_traveled, test_runtime=end-start, test_data=test_data)
+        run_time = time.time() - start
+
+        FileHandler.log_test(test_log_location, test_name=str(algorithm), test_result=distance_traveled, test_runtime=run_time, test_data=test_data)
+
+        distances_traveled.append(distance_traveled)
+        run_times.append(run_time)
+
+    average_distance_traveled = sum(distances_traveled) / len(distances_traveled)
+    average_run_time = sum(run_times) / len(run_times)
+    FileHandler.log_test(test_log_location, test_name="AVERAGE_FOR_ALGORITHMS", test_result=average_distance_traveled, test_runtime=average_run_time, test_data=test_data)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,6 @@
+name,result,run_time,population_size_per_genetic_algorithm,epoch_threshold,crossover_probability,mutation_probability,number_of_depots,number_of_customers
+GA_CrossoverMethods.UNIFORM_MutationMethods.TWORS,11230.54586012376,12.402431964874268,10,25,0.2,0.01,13,20
+GA_CrossoverMethods.UNIFORM_MutationMethods.REVERSE_SEQUENCE_MUTATION,11031.442005287443,13.401837348937988,10,25,0.2,0.01,13,20
+GA_CrossoverMethods.PARTIALLY_MAPPED_MutationMethods.TWORS,11086.056449890679,13.51747441291809,10,25,0.2,0.01,13,20
+GA_CrossoverMethods.PARTIALLY_MAPPED_MutationMethods.REVERSE_SEQUENCE_MUTATION,10864.38996534482,12.21004867553711,10,25,0.2,0.01,13,20
+GA_CrossoverMethods.ORDERED_CROSSOVER_MutationMethods.TWORS,11183.783900909048,12.93806266784668,10,25,0.2,0.01,13,20
