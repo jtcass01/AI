@@ -88,7 +88,8 @@ def vehicle_routing_problem_test(dataset, population_size_per_genetic_algorithm,
     woc_algorithm = WisdomOfCrowds_GeneticAlgorithm(genetic_algorithms=woc_algorthms, weights=[0.05, 0.05, 0.05, 0.05, 0.6, 0.2], log_location=log_location)
     algorithms.append(woc_algorithm)
 
-    test_log_location = os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "VehicleRoutingProblemTest_" + dataset +"_" + str(number_of_depots) + "_" +  str(number_of_customers) + "_" + datetime.datetime.now().isoformat()[:10] + ".csv"
+#    test_log_location = os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "VehicleRoutingProblemTest_" + dataset +"_" + str(number_of_depots) + "_" +  str(number_of_customers) + "_" + datetime.datetime.now().isoformat()[:10] + ".csv"
+    test_log_location = os.getcwd() + os.path.sep + ".." + os.path.sep + "results" + os.path.sep + "VehicleRoutingProblemTest_" + dataset +"_" + str(number_of_depots) + "_" +  str(number_of_customers) + "_" + "2019-11-10" + ".csv"
     FileHandler.start_test(test_log_location, data_labels=test_data_labels)
 
     distances_traveled = list([])
