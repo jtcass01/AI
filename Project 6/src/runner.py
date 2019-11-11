@@ -3,8 +3,8 @@ import datetime
 import itertools
 
 def run_full_tests():
-	datasets = list(["Random77"])
-	dataset_sizes = list([77])
+	datasets = list(["Random44"])
+	dataset_sizes = list([44])
 	assert len(datasets) == len(dataset_sizes)
 
 	for dataset, dataset_size in zip(datasets, dataset_sizes):
