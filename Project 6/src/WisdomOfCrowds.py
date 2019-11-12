@@ -50,11 +50,6 @@ class WisdomOfCrowds_GeneticAlgorithm():
         self.retrieve_crowd()
         self.generate_crowd_solution()
         self.crowd_solution.log(self.log_location)
-        del self.crowd_solution
-
-        # Reload crowd solution - this break was added to minimize loss from deepcopy error
-        self.crowd_solution = CrowdSolution(self.genetic_algorithms[0].graph)
-        self.crowd_solution.load(self.log_location)
 
         # Complete the graph using a greedy insertion heurstic and return.
         self.crowd_solution.complete_graph_greedy_heuristic(self.depot_location, self.customers, superiority_tolerance=0.3)
