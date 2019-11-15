@@ -398,11 +398,10 @@ class VRP_GeneticAlgorithm(object):
         self.population[chromosome_id] = new_chromosome
 
     class Chromosome(object):
-        def __init__(self, chromosome_id, graph, starting_vertex_id, number_of_vehicles, crossover_method, mutation_method, customers=None, customer_order=None):
+        def __init__(self, chromosome_id, graph, starting_vertex_id, number_of_vehicles, crossover_method, mutation_method, ordered_customers=None, customer_order=None):
             self.chromosome_id = chromosome_id
             self.graph = graph
-            print(customers)
-            self.route = VRP_GeneticAlgorithm.Chromosome.Route(graph, starting_vertex_id, number_of_vehicles, customers=customers, customer_order=customer_order)
+            self.route = VRP_GeneticAlgorithm.Chromosome.Route(graph, starting_vertex_id, number_of_vehicles, ordered_customers=ordered_customers, customer_order=customer_order)
             self.crossover_method = crossover_method
             self.mutation_method = mutation_method
 
@@ -493,7 +492,7 @@ class VRP_GeneticAlgorithm(object):
                         new_customer_order.append(customer)
 
             resultant_chromosome = VRP_GeneticAlgorithm.Chromosome(None, self.graph, self.route.depot.vertex_id, self.route.number_of_vehicles,
-                                                                   self.crossover_method, self.mutation_method, customers=np.array(new_customer_order))
+                                                                   self.crossover_method, self.mutation_method, ordered_customers=np.array(new_customer_order))
 
             return resultant_chromosome
 
@@ -543,13 +542,13 @@ class VRP_GeneticAlgorithm(object):
             return self.fitness() >= other.fitness()
 
         class Route(object):
-            def __init__(self, graph, depot_vertex_id, number_of_vehicles, customers=None, customer_order=None):
+            def __init__(self, graph, depot_vertex_id, number_of_vehicles, ordered_customers=None, customer_order=None):
                 assert number_of_vehicles < len(graph.vertices)
                 self.number_of_vehicles = number_of_vehicles
                 self.depot = graph.get_vertex_by_id(depot_vertex_id)
 
-                if customers is not None:
-                    self.customers = customers
+                if ordered_customers is not None:
+                    self.customers = ordered_customers
                 else:
                     self.customers = VRP_GeneticAlgorithm.Chromosome.Route.get_customers(graph, self.depot, customer_order)
 
@@ -598,8 +597,7 @@ class VRP_GeneticAlgorithm(object):
             REVERSE_SEQUENCE_MUTATION = 2
 
 def build_test_chromosome(graph, chromosome_id, depot_vertex_id, customer_order, crossover_method, mutation_method):
-    return VRP_GeneticAlgorithm.Chromosome(None, graph, depot_vertex_id, 1,
-                                                           crossover_method, mutation_method, customer_order=customer_order)
+    return VRP_GeneticAlgorithm.Chromosome(None, graph, depot_vertex_id, 1, crossover_method, mutation_method, customer_order=customer_order)
 
 def crossover_test():
     mutation_method = VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION
