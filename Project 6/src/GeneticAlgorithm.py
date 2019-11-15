@@ -398,10 +398,11 @@ class VRP_GeneticAlgorithm(object):
         self.population[chromosome_id] = new_chromosome
 
     class Chromosome(object):
-        def __init__(self, chromosome_id, graph, starting_vertex_id, number_of_vehicles, crossover_method, mutation_method, customer_order=None):
+        def __init__(self, chromosome_id, graph, starting_vertex_id, number_of_vehicles, crossover_method, mutation_method, customers=None, customer_order=None):
             self.chromosome_id = chromosome_id
             self.graph = graph
-            self.route = VRP_GeneticAlgorithm.Chromosome.Route(graph, starting_vertex_id, number_of_vehicles, customer_order)
+            print(customers)
+            self.route = VRP_GeneticAlgorithm.Chromosome.Route(graph, starting_vertex_id, number_of_vehicles, customers=customers, customer_order=customer_order)
             self.crossover_method = crossover_method
             self.mutation_method = mutation_method
 
@@ -421,59 +422,57 @@ class VRP_GeneticAlgorithm(object):
             if self.crossover_method == VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.UNIFORM:
                 self_turn = True
 
-                while len(new_customer_order) < len(self.route.customers)-1:
+                while len(new_customer_order) < len(self.route.customers):
                     if self_turn:
-                        remaining_vertex_ids = [vertex.vertex_id for vertex in self.route.customers if vertex.vertex_id not in new_customer_order]
-                        if len(remaining_vertex_ids) > 0:
-                            new_customer_order.append(random.choice(remaining_vertex_ids))
+                        remaining_customers = [customer for customer in self.route.customers if customer not in new_customer_order]
+                        if len(remaining_customers) > 0:
+                            new_customer_order.append(random.choice(remaining_customers))
 
                         self_turn = False
                     else:
-                        remaining_vertex_ids = [vertex.vertex_id for vertex in other_chromosome.route.customers if vertex.vertex_id not in new_customer_order]
-                        if len(remaining_vertex_ids) > 0:
-                            new_customer_order.append(random.choice(remaining_vertex_ids))
+                        remaining_customers = [customer for customer in other_chromosome.route.customers if customer not in new_customer_order]
+                        if len(remaining_customers) > 0:
+                            new_customer_order.append(random.choice(remaining_customers))
 
                         self_turn = True
 
             elif self.crossover_method == VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.PARTIALLY_MAPPED:
-                p1 = random.randint(1, len(self.route.customers)-3)
-                p2 = random.randint(p1+1, len(self.route.customers)-2)
+                p1 = random.randint(1, len(self.route.customers)-2)
+                p2 = random.randint(p1+1, len(self.route.customers)-1)
 
-                self_ids = [vertex.vertex_id for vertex in self.route.customers][:-1]
-                self_s1 = self_ids[:p1]
-                self_s2 = self_ids[p1:p2]
-                self_s3 = self_ids[p2:]
+                self_s1 = self.route.customers[:p1]
+                self_s2 = self.route.customers[p1:p2]
+                self_s3 = self.route.customers[p2:]
 
-                other_ids = [vertex.vertex_id for vertex in other_chromosome.route.customers][:-1]
-                other_s1 = other_ids[:p1]
-                other_s2 = other_ids[p1:p2]
-                other_s3 = other_ids[p2:]
+                other_s1 = other_chromosome.route.customers[:p1]
+                other_s2 = other_chromosome.route.customers[p1:p2]
+                other_s3 = other_chromosome.route.customers[p2:]
 
                 new_customer_order = self_s1
 
                 s2_left = list([])
-                for vertex_id in other_s2:
-                    if vertex_id not in self_s1 and vertex_id not in self_s3:
-                        s2_left.append(vertex_id)
+                for customer in other_s2:
+                    if customer not in self_s1 and customer not in self_s3:
+                        s2_left.append(customer)
 
                 s3_left = list([])
-                for vertex_id in other_s3:
-                    if vertex_id not in self_s1 and vertex_id not in self_s3:
-                        s3_left.append(vertex_id)
+                for customer in other_s3:
+                    if customer not in self_s1 and customer not in self_s3:
+                        s3_left.append(customer)
 
                 s1_left = list([])
-                for vertex_id in other_s1:
-                    if vertex_id not in self_s1 and vertex_id not in self_s3:
-                        s1_left.append(vertex_id)
+                for customer in other_s1:
+                    if customer not in self_s1 and customer not in self_s3:
+                        s1_left.append(customer)
 
-                remaining_vertex_ids = s2_left + s3_left + s1_left
-                new_customer_order += remaining_vertex_ids[:p2-p1]
+                remaining_customers = s2_left + s3_left + s1_left
+                new_customer_order += remaining_customers[:p2-p1]
 
                 new_customer_order += self_s3
 
             elif self.crossover_method == VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER:
-                p1 = random.randint(1, len(self.route.customers)-3)
-                p2 = random.randint(p1+1, len(self.route.customers)-2)
+                p1 = random.randint(1, len(self.route.customers)-2)
+                p2 = random.randint(p1+1, len(self.route.customers)-1)
                 j_1 = p1 + 1
                 j_2 = j_1
                 k = j_1
@@ -482,31 +481,19 @@ class VRP_GeneticAlgorithm(object):
                 from_p1 = self.route.customers[p1:]
                 mid = other_chromosome.route.customers[p1:p2+1]
 
-                for vertex in to_p1:
-                    if vertex not in mid:
-                        new_customer_order.append(vertex.vertex_id)
+                for customer in to_p1:
+                    if customer not in mid:
+                        new_customer_order.append(customer)
 
-                for vertex in mid:
-                    new_customer_order.append(vertex.vertex_id)
+                for customer in mid:
+                    new_customer_order.append(customer)
 
-                for vertex in from_p1:
-                    if vertex.vertex_id not in new_customer_order:
-                        new_customer_order.append(vertex.vertex_id)
+                for customer in from_p1:
+                    if customer not in new_customer_order:
+                        new_customer_order.append(customer)
 
-            else: # Splits the two chromosomes down the middle
-                index = 0
-
-                while len(new_customer_order) < len(self.route.customers) - 1:
-                    if index < len(self.route.customers) // 2:
-                        if self.route.customers[index].vertex_id not in new_customer_order:
-                            new_customer_order.append(self.route.customers[index].vertex_id)
-                            index += 1
-                    else:
-                        remaining_vertices = [vertex for vertex in self.route.customers if vertex.vertex_id not in new_customer_order]
-                        for remainining_vertex in remaining_vertices:
-                            new_customer_order.append(remainining_vertex.vertex_id)
-
-            resultant_chromosome = VRP_GeneticAlgorithm.Chromosome(None, self.graph, self.route.depot.vertex_id, self.route.number_of_vehicles, self.crossover_method, self.mutation_method, customer_order=new_customer_order)
+            resultant_chromosome = VRP_GeneticAlgorithm.Chromosome(None, self.graph, self.route.depot.vertex_id, self.route.number_of_vehicles,
+                                                                   self.crossover_method, self.mutation_method, customers=np.array(new_customer_order))
 
             return resultant_chromosome
 
@@ -517,25 +504,21 @@ class VRP_GeneticAlgorithm(object):
                 # Generate random indices for swapping
                 mutated_index_0 = random.randint(0, len(self.route.customers)-2)
                 mutated_index_1 = random.randint(mutated_index_0+1, len(self.route.customers)-1)
-                swap_vertex = None
+                swap_customer = None
 
                 # Iterate over the customers until the swap_vertex is found.  Keep track and replace when at new location.
-                for vertex_index, vertex in enumerate(self.route.customers):
-                    if vertex_index == mutated_index_0:
-                        swap_vertex = vertex
-                    elif vertex_index == mutated_index_1:
-                        new_customer_order.append(swap_vertex.vertex_id)
-                        new_customer_order.insert(mutated_index_0, vertex.vertex_id)
+                for customer_index, customer in enumerate(self.route.customers):
+                    if customer_index == mutated_index_0:
+                        swap_customer = customer
+                    elif customer_index == mutated_index_1:
+                        new_customer_order.append(swap_customer)
+                        new_customer_order.insert(mutated_index_0, customer)
                     else:
-                        new_customer_order.append(vertex.vertex_id)
-            elif self.mutation_method == VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION:
-                for vertex in np.flip(self.route.customers[:]):
-                    new_customer_order.append(vertex.vertex_id)
+                        new_customer_order.append(customer)
 
-            depot_vertex_id = self.route.depot.vertex_id
-            number_of_vehicles = self.route.number_of_vehicles
-            del self.route
-            self.route = VRP_GeneticAlgorithm.Chromosome.Route(self.graph, depot_vertex_id, number_of_vehicles, new_customer_order)
+                self.route.customers = np.array(new_customer_order)
+            elif self.mutation_method == VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION:
+                self.route.customers = np.flip(self.route.customers[:])
 
         def fitness(self):
             return self.route.fitness()
@@ -556,11 +539,18 @@ class VRP_GeneticAlgorithm(object):
             return self.fitness() >= other.fitness()
 
         class Route(object):
-            def __init__(self, graph, starting_vertex_id, number_of_vehicles, customer_order=None):
+            def __init__(self, graph, depot_vertex_id, number_of_vehicles, customers=None, customer_order=None):
                 assert number_of_vehicles < len(graph.vertices)
                 self.number_of_vehicles = number_of_vehicles
-                self.depot = graph.get_vertex_by_id(starting_vertex_id)
-                self.customers = VRP_GeneticAlgorithm.Chromosome.Route.get_customers(graph, self.depot, customer_order)
+                self.depot = graph.get_vertex_by_id(depot_vertex_id)
+
+                if customers is not None:
+                    self.customers = customers
+                else:
+                    self.customers = VRP_GeneticAlgorithm.Chromosome.Route.get_customers(graph, self.depot, customer_order)
+
+            def __init__(self):
+                return "Depo: " + str(self.depot) + "\ncustomer vertex_ids = " + str([str(customer.vertex_id) for customer in self.customers])
 
             def fitness(self):
                 distance = 0
@@ -603,6 +593,31 @@ class VRP_GeneticAlgorithm(object):
             TWORS = 1
             REVERSE_SEQUENCE_MUTATION = 2
 
+def build_test_chromosome(graph, chromosome_id, depot_vertex_id, customer_order, crossover_method, mutation_method):
+    return VRP_GeneticAlgorithm.Chromosome(None, graph, depot_vertex_id, 1,
+                                                           crossover_method, mutation_method, customer_order=customer_order)
+
+def crossover_test():
+    mutation_method = VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION
+
+    for crossover_method_index in range(1, 4):
+        crossover_method = VRP_GeneticAlgorithm.Chromosome.CrossoverMethods(crossover_method_index)
+        print("\nCrossover Method:", crossover_method)
+
+        # Read in test data
+        graph = Graph(FileHandler.read_graph(os.getcwd() + os.path.sep + ".." + os.path.sep + "datasets" + os.path.sep + "Random7.tsp"))
+
+        parent_path_1 = [1, 2, 3, 4, 5, 6]
+        print("Parent 1: ", parent_path_1)
+        parent_chromosome_1 = build_test_chromosome(graph, 1, 7, parent_path_1, crossover_method, mutation_method)
+
+        parent_path_2 = [6, 5, 4, 3, 2, 1]
+        print("Parent 2: ", parent_path_2)
+        parent_chromosome_2 = build_test_chromosome(graph, 2, 7, parent_path_2, crossover_method, mutation_method)
+
+        child = parent_chromosome_1.crossover(parent_chromosome_2)
+
+        print("Child: ", str(child.route))
 
 def vrp_test():
     # Read in test data
@@ -617,4 +632,4 @@ def vrp_test():
 
 
 if __name__ == "__main__":
-    vrp_test()
+    crossover_test()
