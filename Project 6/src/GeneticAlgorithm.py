@@ -518,7 +518,11 @@ class VRP_GeneticAlgorithm(object):
 
                 self.route.customers = np.array(new_customer_order)
             elif self.mutation_method == VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION:
-                self.route.customers = np.flip(self.route.customers[:])
+                # Generate random indices for swapping
+                mutated_index_0 = random.randint(0, len(self.route.customers)-2)
+                mutated_index_1 = random.randint(mutated_index_0+1, len(self.route.customers)-1)
+
+                self.route.customers = np.flip(self.route.customers[mutated_index_0:mutated_index_1])
 
         def fitness(self):
             return self.route.fitness()
