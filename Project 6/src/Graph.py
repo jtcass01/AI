@@ -420,6 +420,51 @@ class Route(object):
 
         return result
 
+class VRP_Route(object):
+    def __init__(self, graph, depot_vertex_id, number_of_vehicles, ordered_customers=None, customer_order=None):
+        assert number_of_vehicles < len(graph.vertices)
+        self.number_of_vehicles = number_of_vehicles
+        self.depot = graph.get_vertex_by_id(depot_vertex_id)
+
+        if ordered_customers is not None:
+            self.customers = ordered_customers
+        else:
+            self.customers = VRP_GeneticAlgorithm.Chromosome.Route.get_customers(graph, self.depot, customer_order)
+
+    def __init__(self):
+        return "Depo: " + str(self.depot) + "\ncustomer vertex_ids = " + str([str(customer.vertex_id) for customer in self.customers])
+
+    def fitness(self):
+        distance = 0
+
+        vehicle_routes = np.array_split(self.customers, self.number_of_vehicles)
+
+        for route in vehicle_routes:
+            current_vertex = self.depot
+            for customer in route:
+                distance += current_vertex.compute_distance(customer)
+                current_vertex = customer
+            distance += current_vertex.compute_distance(self.depot)
+
+        return distance
+
+    @staticmethod
+    def get_customers(graph, depot, customer_order=None):
+        if customer_order is None:
+            customers = np.array([vertex for vertex in graph.vertices if vertex.vertex_id != depot.vertex_id])
+            np.random.shuffle(customers)
+        else:
+            customers = None
+
+            for customer_id in customer_order:
+                if customers is None:
+                    customers = np.array([graph.get_vertex_by_id(customer_id)])
+                else:
+                    customers = np.append(customers, [graph.get_vertex_by_id(customer_id)])
+
+        return customers
+
+
 class Graph(object):
     def __init__(self, vertices):
         self.vertices = vertices
