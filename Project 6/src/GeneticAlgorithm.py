@@ -8,14 +8,15 @@ from enum import Enum
 from copy import deepcopy
 
 from FileHandler import FileHandler
-from Graph import  Graph, VRP_Route
+from Graph import  Graph
 
 
 class VRP_GeneticAlgorithm(object):
-    def __init__(self, crossover_method, mutation_method, population_size=100, crossover_probability=0.6, mutation_probability=0.02, epoch_threshold=20):
+    def __init__(self, crossover_method, mutation_method, selection_method, population_size=100, crossover_probability=0.6, mutation_probability=0.02, epoch_threshold=20):
         self.crossover_method = crossover_method
         self.mutation_method = mutation_method
         self.population_size = population_size
+        self.selection_method = selection_method
         self.crossover_probability = crossover_probability
         self.mutation_probability = mutation_probability
         self.epoch_threshold = epoch_threshold
@@ -39,44 +40,47 @@ class VRP_GeneticAlgorithm(object):
         epochs_since_last_improvement = 0
         best_chromosome = min(self.population)
         self.best_chromosome = best_chromosome
-        self.costs.append(best_chromosome.route.distance_traveled)
+        best_fitness = best_chromosome.route.fitness()
+        self.costs.append(best_fitness)
 
         while epochs_since_last_improvement < self.epoch_threshold:
+            parent_population = self.perform_selection()
+
             # Perform cross overs
-            self.perform_crossovers()
+            self.perform_crossovers(parent_population)
 
             # Perform mutations
             self.perform_mutations()
 
             # Get new best_chromosome
             best_chromosome = min(self.population)
+            new_best_fitness = best_chromosome.route.fitness()
 
-            improvement = self.best_chromosome.route.distance_traveled - best_chromosome.route.distance_traveled
+            improvement = best_fitness - new_best_fitness
 
             if improvement > 0:
                 self.best_chromosome = best_chromosome
+                best_fitness = new_best_fitness
                 epochs_since_last_improvement = 0
             else:
                 epochs_since_last_improvement += 1
 
-            self.costs.append(self.best_chromosome.route.distance_traveled)
+            self.costs.append(best_fitness)
 
-        return self.best_chromosome.route.recount_distance()
+        return self.best_chromosome.route.fitness()
 
     def get_cost(self):
-        return self.best_chromosome.route.recount_distance()
+        return self.best_chromosome.route.fitness()
 
     def display_result(self):
         self.display_state()
         plt.plot(self.costs, label="distance traveled")
         plt.legend()
         plt.show()
-        self.best_chromosome.route.plot()
+        print(self.best_chromosome.fitness())
+#        self.best_chromosome.route.plot()
 
-    def perform_crossovers(self):
-        chromosome_parent_population = deepcopy(self.population, memo={})
-        chromosome_parent_population.sort()
-        chromosome_parent_population = chromosome_parent_population[:int(len(chromosome_parent_population) * self.crossover_probability)]
+    def perform_crossovers(self, chromosome_parent_population):
         if len(chromosome_parent_population) < 2:
             # Cant do any cross overs
             pass
@@ -94,6 +98,12 @@ class VRP_GeneticAlgorithm(object):
         for mutant in mutation_population:
             mutant.mutate()
 
+    def perform_selection(self):
+        if self.selection_method == VRP_GeneticAlgorithm.SelectionMethods.ROULETTE_WHEEL_SELECTION:
+            total_fitness = sum([chromosome.fitness() for chromosome in self.population])
+            probability_of_selection = np.array([chromosome.fitness()/total_fitness for chromosome in self.population])
+            return deepcopy(np.random.choice(self.population, int(self.crossover_probability*len(self.population)), p=probability_of_selection))
+
     def display_state(self):
         for chromosome in self.population:
             print(chromosome)
@@ -103,16 +113,35 @@ class VRP_GeneticAlgorithm(object):
         new_chromosome.chromosome_id = chromosome_id
         self.population[chromosome_id] = new_chromosome
 
+    class SelectionMethods(Enum):
+        INVALID = 0
+        ROULETTE_WHEEL_SELECTION = 1
+
     class Chromosome(object):
         def __init__(self, chromosome_id, graph, starting_vertex_id, number_of_vehicles, crossover_method, mutation_method, ordered_customers=None, customer_order=None):
             self.chromosome_id = chromosome_id
             self.graph = graph
-            self.route = None
+            self.route = VRP_GeneticAlgorithm.Chromosome.Route(graph, starting_vertex_id, number_of_vehicles, ordered_customers=ordered_customers, customer_order=customer_order)
             self.crossover_method = crossover_method
             self.mutation_method = mutation_method
 
         def __str__(self):
             return "Chromosome #"  + str(self.chromosome_id) + " | " + str(self.fitness())
+
+        def __eq__(self, other):
+            return self.fitness() == other.fitness()
+
+        def __lt__(self, other):
+            return self.fitness() < other.fitness()
+
+        def __le__(self, other):
+            return self.fitness() <= other.fitness()
+
+        def __gt__(self, other):
+            return self.fitness() > other.fitness()
+
+        def __ge__(self, other):
+            return self.fitness() >= other.fitness()
 
         def display_vertex_ids(self):
             string = "["
@@ -171,9 +200,8 @@ class VRP_GeneticAlgorithm(object):
                         s1_left.append(customer)
 
                 remaining_customers = s2_left + s3_left + s1_left
-                new_customer_order += remaining_customers[:p2-p1]
 
-                new_customer_order += self_s3
+                new_customer_order = np.concatenate((new_customer_order, remaining_customers[:p2-p1], self_s3), axis=None)
 
             elif self.crossover_method == VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER:
                 p1 = random.randint(1, len(self.route.customers)-2)
@@ -232,25 +260,50 @@ class VRP_GeneticAlgorithm(object):
         def fitness(self):
             return self.route.fitness()
 
-        def __eq__(self, other):
-            return self.fitness() == other.fitness()
-
-        def __lt__(self, other):
-            return self.fitness() < other.fitness()
-
-        def __le__(self, other):
-            return self.fitness() <= other.fitness()
-
-        def __gt__(self, other):
-            return self.fitness() > other.fitness()
-
-        def __ge__(self, other):
-            return self.fitness() >= other.fitness()
 
         class Route(object):
             def __init__(self, graph, depot_vertex_id, number_of_vehicles, ordered_customers=None, customer_order=None):
-                print("Test")
                 assert number_of_vehicles < len(graph.vertices)
+                self.number_of_vehicles = number_of_vehicles
+                self.depot = graph.get_vertex_by_id(depot_vertex_id)
+
+                if ordered_customers is not None:
+                    self.customers = ordered_customers
+                else:
+                    self.customers = VRP_GeneticAlgorithm.Chromosome.Route.get_customers(graph, self.depot, customer_order)
+
+            def __str__(self):
+                return "Depo: " + str(self.depot) + "\ncustomer vertex_ids = " + str([str(customer.vertex_id) for customer in self.customers])
+
+            def fitness(self):
+                distance = 0
+
+                vehicle_routes = np.array_split(self.customers, self.number_of_vehicles)
+
+                for route in vehicle_routes:
+                    current_vertex = self.depot
+                    for customer in route:
+                        distance += current_vertex.compute_distance(customer)
+                        current_vertex = customer
+                    distance += current_vertex.compute_distance(self.depot)
+
+                return distance
+
+            @staticmethod
+            def get_customers(graph, depot, customer_order=None):
+                if customer_order is None:
+                    customers = np.array([vertex for vertex in graph.vertices if vertex.vertex_id != depot.vertex_id])
+                    np.random.shuffle(customers)
+                else:
+                    customers = None
+
+                    for customer_id in customer_order:
+                        if customers is None:
+                            customers = np.array([graph.get_vertex_by_id(customer_id)])
+                        else:
+                            customers = np.append(customers, [graph.get_vertex_by_id(customer_id)])
+
+                return customers
 
 
         class CrossoverMethods(Enum):
@@ -264,14 +317,13 @@ class VRP_GeneticAlgorithm(object):
             TWORS = 1
             REVERSE_SEQUENCE_MUTATION = 2
 
+
 def build_test_chromosome(graph, chromosome_id, depot_vertex_id, customer_order, crossover_method, mutation_method):
     return VRP_GeneticAlgorithm.Chromosome(None, graph, depot_vertex_id, 1, crossover_method, mutation_method, customer_order=customer_order)
 
 
 def crossover_test():
     mutation_method = VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION
-
-    VRP_GeneticAlgorithm.Chromosome.Route(None, None, None, ordered_customers=5)
 
     for crossover_method_index in range(1, 4):
         crossover_method = VRP_GeneticAlgorithm.Chromosome.CrossoverMethods(crossover_method_index)
@@ -298,11 +350,15 @@ def vrp_test():
     # calculate edges
     graph.build_graph()
 
-    test_algorithm = VRP_GeneticAlgorithm(population_size=25, crossover_probability=0.8, mutation_probability=0.01, epoch_threshold=100, crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER, mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS)
-    test_algorithm.initialize_population(graph, 8, 2)
-#    test_algorithm.run()
-#    test_algorithm.display_result()
+    test_algorithm = VRP_GeneticAlgorithm(population_size=20, crossover_probability=0.8, mutation_probability=0.1, epoch_threshold=50,
+                                        crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER,
+                                        mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS,
+                                        selection_method=VRP_GeneticAlgorithm.SelectionMethods.ROULETTE_WHEEL_SELECTION)
+    test_algorithm.initialize_population(graph, starting_vertex_id=8, number_of_vehicles=1)
+    test_algorithm.run()
+    test_algorithm.display_result()
 
 
 if __name__ == "__main__":
-    crossover_test()
+#    crossover_test()
+    vrp_test()
