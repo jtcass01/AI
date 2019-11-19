@@ -352,7 +352,7 @@ def vrp_test():
 
     test_algorithm = VRP_GeneticAlgorithm(population_size=20, crossover_probability=0.8, mutation_probability=0.1, epoch_threshold=50,
                                         crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER,
-                                        mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.TWORS,
+                                        mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION,
                                         selection_method=VRP_GeneticAlgorithm.SelectionMethods.ROULETTE_WHEEL_SELECTION)
     test_algorithm.initialize_population(graph, starting_vertex_id=8, number_of_vehicles=1)
     test_algorithm.run()
