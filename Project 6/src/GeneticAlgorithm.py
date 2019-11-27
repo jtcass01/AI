@@ -44,13 +44,26 @@ class VRP_GeneticAlgorithm(object):
         self.costs.append(best_fitness)
 
         while epochs_since_last_improvement < self.epoch_threshold:
+            print("State at start of epoch", len(self.population))
+            self.display_state()
+
             parent_population = self.perform_selection()
+
+            print("parent population")
+            for chromosome in parent_population:
+                print(chromosome)
 
             # Perform cross overs
             self.perform_crossovers(parent_population)
 
+            print("State after crossovers", len(self.population))
+            self.display_state()
+
             # Perform mutations
             self.perform_mutations()
+
+            print("State after mutations", len(self.population))
+            self.display_state()
 
             # Get new best_chromosome
             best_chromosome = min(self.population)
@@ -85,11 +98,14 @@ class VRP_GeneticAlgorithm(object):
             # Cant do any cross overs
             pass
         else:
-            children_to_replace = [child for child in self.population if child not in chromosome_parent_population]
+            self.population.sort()
+            children_to_replace = np.flip(self.population)
+            children_to_replace = children_to_replace[:int(self.crossover_probability*self.population_size)]
+            print("replacing children")
             for chromosome in children_to_replace:
                 random.shuffle(chromosome_parent_population)
                 baby = chromosome_parent_population[0].crossover(chromosome_parent_population[1])
-                self.replace_chromosome(chromosome.chromosome_id, baby)
+                self.replace_chromosome(chromosome, baby)
 
     def perform_mutations(self):
         mutation_population = deepcopy(self.population, memo={})
@@ -109,9 +125,14 @@ class VRP_GeneticAlgorithm(object):
             print(chromosome)
             chromosome.display_vertex_ids()
 
-    def replace_chromosome(self, chromosome_id, new_chromosome):
-        new_chromosome.chromosome_id = chromosome_id
-        self.population[chromosome_id] = new_chromosome
+    def replace_chromosome(self, chromosome_to_replace, new_chromosome):
+        new_chromosome.chromosome_id = chromosome_to_replace.chromosome_id
+        print("replacing", chromosome_to_replace, "with", new_chromosome)
+        for chromosome_index, chromosome in enumerate(self.population):
+            if chromosome.chromosome_id == chromosome_to_replace.chromosome_id:
+                self.population[chromosome_index] = deepcopy(new_chromosome)
+#        self.population = np.where(self.population==chromosome, new_chromosome, self.population)
+#        self.population[np.where(self.population == chromosome)] = deepcopy(new_chromosome)
 
     class SelectionMethods(Enum):
         INVALID = 0
@@ -350,7 +371,7 @@ def vrp_test():
     # calculate edges
     graph.build_graph()
 
-    test_algorithm = VRP_GeneticAlgorithm(population_size=20, crossover_probability=0.8, mutation_probability=0.1, epoch_threshold=50,
+    test_algorithm = VRP_GeneticAlgorithm(population_size=20, crossover_probability=0.5, mutation_probability=0.05, epoch_threshold=3,
                                         crossover_method=VRP_GeneticAlgorithm.Chromosome.CrossoverMethods.ORDERED_CROSSOVER,
                                         mutation_method=VRP_GeneticAlgorithm.Chromosome.MutationMethods.REVERSE_SEQUENCE_MUTATION,
                                         selection_method=VRP_GeneticAlgorithm.SelectionMethods.ROULETTE_WHEEL_SELECTION)
